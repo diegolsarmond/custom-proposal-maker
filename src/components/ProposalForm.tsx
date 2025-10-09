@@ -199,60 +199,57 @@ export const ProposalForm = ({ onGeneratePDF }: ProposalFormProps) => {
   const { totalImplantation, totalRecurrence } = calculateTotals();
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Dados do Cliente</CardTitle>
-          <CardDescription>Informações básicas para a proposta comercial</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="clientName">Nome do Cliente *</Label>
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="grid lg:grid-cols-2 gap-4">
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg">Dados do Cliente</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div>
+              <Label htmlFor="clientName" className="text-sm">Nome do Cliente *</Label>
               <Input
                 id="clientName"
                 value={formData.clientName}
                 onChange={(e) => setFormData({ ...formData, clientName: e.target.value })}
                 placeholder="Ex: Rafael Alves"
                 required
+                className="h-9"
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="companyName">Nome da Empresa *</Label>
+            <div>
+              <Label htmlFor="companyName" className="text-sm">Nome da Empresa *</Label>
               <Input
                 id="companyName"
                 value={formData.companyName}
                 onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
                 placeholder="Ex: Quantum Soluções"
                 required
+                className="h-9"
               />
             </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="document">CNPJ ou CPF</Label>
+            <div>
+              <Label htmlFor="document" className="text-sm">CNPJ ou CPF</Label>
               <Input
                 id="document"
                 value={formData.document}
                 onChange={(e) => setFormData({ ...formData, document: e.target.value })}
                 placeholder="00.000.000/0000-00"
+                className="h-9"
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="segment">Segmento</Label>
+            <div>
+              <Label htmlFor="segment" className="text-sm">Segmento</Label>
               <Input
                 id="segment"
                 value={formData.segment}
                 onChange={(e) => setFormData({ ...formData, segment: e.target.value })}
                 placeholder="Ex: Imobiliária"
+                className="h-9"
               />
             </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">E-mail *</Label>
+            <div>
+              <Label htmlFor="email" className="text-sm">E-mail *</Label>
               <Input
                 id="email"
                 type="email"
@@ -260,107 +257,39 @@ export const ProposalForm = ({ onGeneratePDF }: ProposalFormProps) => {
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 placeholder="cliente@empresa.com"
                 required
+                className="h-9"
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="phone">Telefone</Label>
+            <div>
+              <Label htmlFor="phone" className="text-sm">Telefone</Label>
               <Input
                 id="phone"
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                 placeholder="(31) 9588-5000"
+                className="h-9"
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="date">Data da Proposta</Label>
+            <div>
+              <Label htmlFor="date" className="text-sm">Data da Proposta</Label>
               <Input
                 id="date"
                 type="date"
                 value={formData.date}
                 onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                className="h-9"
               />
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Automações</CardTitle>
-          <CardDescription>Selecione as automações desejadas e defina os valores</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {availableAutomations.map((automation) => (
-            <div
-              key={automation.id}
-              className="border border-border rounded-lg p-4 space-y-3 hover:border-primary/50 transition-colors"
-            >
-              <div className="flex items-start space-x-3">
-                <Checkbox
-                  id={automation.id}
-                  checked={formData.selectedAutomations[automation.id]?.selected || false}
-                  onCheckedChange={(checked) =>
-                    handleAutomationToggle(automation.id, checked as boolean)
-                  }
-                />
-                <div className="flex-1">
-                  <Label htmlFor={automation.id} className="cursor-pointer font-semibold">
-                    {automation.name}
-                  </Label>
-                  <p className="text-sm text-muted-foreground">{automation.description}</p>
-                </div>
-              </div>
-
-              {formData.selectedAutomations[automation.id]?.selected && (
-                <div className="grid grid-cols-2 gap-4 ml-8">
-                  <div className="space-y-2">
-                    <Label className="text-sm">Valor de Implantação (R$)</Label>
-                    <Input
-                      type="number"
-                      value={formData.selectedAutomations[automation.id].implantation}
-                      onChange={(e) =>
-                        handleAutomationValueChange(
-                          automation.id,
-                          "implantation",
-                          parseFloat(e.target.value) || 0
-                        )
-                      }
-                      min="0"
-                      step="0.01"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-sm">Valor de Recorrência Mensal (R$)</Label>
-                    <Input
-                      type="number"
-                      value={formData.selectedAutomations[automation.id].recurrence}
-                      onChange={(e) =>
-                        handleAutomationValueChange(
-                          automation.id,
-                          "recurrence",
-                          parseFloat(e.target.value) || 0
-                        )
-                      }
-                      min="0"
-                      step="0.01"
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-          ))}
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Dados da Sua Empresa</CardTitle>
-          <CardDescription>Configure as informações da sua empresa</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="companyConfigName">Nome da Empresa</Label>
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg">Dados da Sua Empresa</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div>
+              <Label htmlFor="companyConfigName" className="text-sm">Nome da Empresa</Label>
               <Input
                 id="companyConfigName"
                 value={formData.companyConfig.name}
@@ -369,10 +298,11 @@ export const ProposalForm = ({ onGeneratePDF }: ProposalFormProps) => {
                   companyConfig: { ...formData.companyConfig, name: e.target.value }
                 })}
                 placeholder="Quantum Soluções"
+                className="h-9"
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="companyAddress">Endereço</Label>
+            <div>
+              <Label htmlFor="companyAddress" className="text-sm">Endereço</Label>
               <Input
                 id="companyAddress"
                 value={formData.companyConfig.address}
@@ -381,12 +311,11 @@ export const ProposalForm = ({ onGeneratePDF }: ProposalFormProps) => {
                   companyConfig: { ...formData.companyConfig, address: e.target.value }
                 })}
                 placeholder="Rua, número - cidade/UF"
+                className="h-9"
               />
             </div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="companyEmail">E-mail da Empresa</Label>
+            <div>
+              <Label htmlFor="companyEmail" className="text-sm">E-mail da Empresa</Label>
               <Input
                 id="companyEmail"
                 type="email"
@@ -396,10 +325,11 @@ export const ProposalForm = ({ onGeneratePDF }: ProposalFormProps) => {
                   companyConfig: { ...formData.companyConfig, email: e.target.value }
                 })}
                 placeholder="contato@empresa.com.br"
+                className="h-9"
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="companyPhone">Telefone da Empresa</Label>
+            <div>
+              <Label htmlFor="companyPhone" className="text-sm">Telefone da Empresa</Label>
               <Input
                 id="companyPhone"
                 value={formData.companyConfig.phone}
@@ -408,123 +338,203 @@ export const ProposalForm = ({ onGeneratePDF }: ProposalFormProps) => {
                   companyConfig: { ...formData.companyConfig, phone: e.target.value }
                 })}
                 placeholder="(31) 9588-5000"
+                className="h-9"
+              />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg">Automações</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="grid lg:grid-cols-2 gap-3">
+            {availableAutomations.map((automation) => (
+              <div
+                key={automation.id}
+                className="border border-border rounded-lg p-3 space-y-2 hover:border-primary/50 transition-colors"
+              >
+                <div className="flex items-start space-x-2">
+                  <Checkbox
+                    id={automation.id}
+                    checked={formData.selectedAutomations[automation.id]?.selected || false}
+                    onCheckedChange={(checked) =>
+                      handleAutomationToggle(automation.id, checked as boolean)
+                    }
+                  />
+                  <div className="flex-1">
+                    <Label htmlFor={automation.id} className="cursor-pointer font-semibold text-sm">
+                      {automation.name}
+                    </Label>
+                    <p className="text-xs text-muted-foreground">{automation.description}</p>
+                  </div>
+                </div>
+
+                {formData.selectedAutomations[automation.id]?.selected && (
+                  <div className="grid grid-cols-2 gap-2 ml-6">
+                    <div>
+                      <Label className="text-xs">Implantação (R$)</Label>
+                      <Input
+                        type="number"
+                        value={formData.selectedAutomations[automation.id].implantation}
+                        onChange={(e) =>
+                          handleAutomationValueChange(
+                            automation.id,
+                            "implantation",
+                            parseFloat(e.target.value) || 0
+                          )
+                        }
+                        min="0"
+                        step="0.01"
+                        className="h-8 text-sm"
+                      />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Recorrência (R$)</Label>
+                      <Input
+                        type="number"
+                        value={formData.selectedAutomations[automation.id].recurrence}
+                        onChange={(e) =>
+                          handleAutomationValueChange(
+                            automation.id,
+                            "recurrence",
+                            parseFloat(e.target.value) || 0
+                          )
+                        }
+                        min="0"
+                        step="0.01"
+                        className="h-8 text-sm"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg">Textos da Proposta</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="grid lg:grid-cols-2 gap-3">
+            <div>
+              <Label htmlFor="introText" className="text-sm">Texto de Introdução</Label>
+              <Textarea
+                id="introText"
+                value={formData.proposalTexts.introductionText}
+                onChange={(e) => setFormData({ 
+                  ...formData, 
+                  proposalTexts: { ...formData.proposalTexts, introductionText: e.target.value }
+                })}
+                rows={3}
+                className="text-sm"
+              />
+            </div>
+            <div>
+              <Label htmlFor="objectiveText" className="text-sm">Texto do Objetivo</Label>
+              <Textarea
+                id="objectiveText"
+                value={formData.proposalTexts.objectiveText}
+                onChange={(e) => setFormData({ 
+                  ...formData, 
+                  proposalTexts: { ...formData.proposalTexts, objectiveText: e.target.value }
+                })}
+                rows={3}
+                className="text-sm"
+              />
+            </div>
+          </div>
+          <div className="grid lg:grid-cols-2 gap-3">
+            <div>
+              <Label htmlFor="servicesText" className="text-sm">Serviços Atribuídos</Label>
+              <Textarea
+                id="servicesText"
+                value={formData.proposalTexts.servicesText}
+                onChange={(e) => setFormData({ 
+                  ...formData, 
+                  proposalTexts: { ...formData.proposalTexts, servicesText: e.target.value }
+                })}
+                rows={3}
+                className="text-sm"
+              />
+            </div>
+            <div>
+              <Label htmlFor="whyText" className="text-sm">Por que contratar?</Label>
+              <Textarea
+                id="whyText"
+                value={formData.proposalTexts.whyText}
+                onChange={(e) => setFormData({ 
+                  ...formData, 
+                  proposalTexts: { ...formData.proposalTexts, whyText: e.target.value }
+                })}
+                rows={3}
+                className="text-sm"
               />
             </div>
           </div>
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Textos da Proposta</CardTitle>
-          <CardDescription>Personalize os textos que aparecem na proposta</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="introText">Texto de Introdução</Label>
-            <Textarea
-              id="introText"
-              value={formData.proposalTexts.introductionText}
-              onChange={(e) => setFormData({ 
-                ...formData, 
-                proposalTexts: { ...formData.proposalTexts, introductionText: e.target.value }
-              })}
-              rows={3}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="objectiveText">Texto do Objetivo</Label>
-            <Textarea
-              id="objectiveText"
-              value={formData.proposalTexts.objectiveText}
-              onChange={(e) => setFormData({ 
-                ...formData, 
-                proposalTexts: { ...formData.proposalTexts, objectiveText: e.target.value }
-              })}
-              rows={4}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="servicesText">Serviços Atribuídos</Label>
-            <Textarea
-              id="servicesText"
-              value={formData.proposalTexts.servicesText}
-              onChange={(e) => setFormData({ 
-                ...formData, 
-                proposalTexts: { ...formData.proposalTexts, servicesText: e.target.value }
-              })}
-              rows={4}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="whyText">Por que contratar?</Label>
-            <Textarea
-              id="whyText"
-              value={formData.proposalTexts.whyText}
-              onChange={(e) => setFormData({ 
-                ...formData, 
-                proposalTexts: { ...formData.proposalTexts, whyText: e.target.value }
-              })}
-              rows={5}
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Informações Adicionais</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="responsible">Responsável pela Proposta</Label>
-            <Input
-              id="responsible"
-              value={formData.responsible}
-              onChange={(e) => setFormData({ ...formData, responsible: e.target.value })}
-              placeholder="Nome do responsável"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="observations">Observações</Label>
-            <Textarea
-              id="observations"
-              value={formData.observations}
-              onChange={(e) => setFormData({ ...formData, observations: e.target.value })}
-              placeholder="Observações adicionais sobre a proposta..."
-              rows={4}
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card className="bg-gradient-to-r from-primary/10 to-primary/5">
-        <CardContent className="pt-6">
-          <div className="flex items-center justify-between">
+      <div className="grid lg:grid-cols-2 gap-4">
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg">Informações Adicionais</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
             <div>
-              <h3 className="font-semibold text-lg">Resumo Financeiro</h3>
-              <div className="mt-2 space-y-1 text-sm">
-                <p>
-                  <span className="text-muted-foreground">Total de Implantação:</span>{" "}
-                  <span className="font-bold text-primary">
-                    R$ {totalImplantation.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                  </span>
-                </p>
-                <p>
-                  <span className="text-muted-foreground">Total de Recorrência Mensal:</span>{" "}
-                  <span className="font-bold text-primary">
-                    R$ {totalRecurrence.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                  </span>
-                </p>
-              </div>
+              <Label htmlFor="responsible" className="text-sm">Responsável pela Proposta</Label>
+              <Input
+                id="responsible"
+                value={formData.responsible}
+                onChange={(e) => setFormData({ ...formData, responsible: e.target.value })}
+                placeholder="Nome do responsável"
+                className="h-9"
+              />
             </div>
-            <Button type="submit" size="lg" className="gap-2">
-              <FileText className="w-5 h-5" />
-              Gerar Proposta PDF
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+            <div>
+              <Label htmlFor="observations" className="text-sm">Observações</Label>
+              <Textarea
+                id="observations"
+                value={formData.observations}
+                onChange={(e) => setFormData({ ...formData, observations: e.target.value })}
+                placeholder="Observações adicionais sobre a proposta..."
+                rows={3}
+                className="text-sm"
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gradient-to-r from-primary/10 to-primary/5">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg">Resumo Financeiro</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <div className="flex justify-between items-center p-3 bg-background/50 rounded-lg">
+              <span className="text-sm text-muted-foreground">Total de Implantação:</span>
+              <span className="font-bold text-primary">
+                R$ {totalImplantation.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+              </span>
+            </div>
+            <div className="flex justify-between items-center p-3 bg-background/50 rounded-lg">
+              <span className="text-sm text-muted-foreground">Total de Recorrência Mensal:</span>
+              <span className="font-bold text-primary">
+                R$ {totalRecurrence.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Button type="submit" size="lg" className="w-full gap-2 py-6">
+        <FileText className="w-5 h-5" />
+        Gerar Proposta PDF
+      </Button>
     </form>
   );
 };
