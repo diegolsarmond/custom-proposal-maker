@@ -16,6 +16,20 @@ export interface Automation {
   defaultRecurrence: number;
 }
 
+export interface CompanyConfig {
+  name: string;
+  address: string;
+  email: string;
+  phone: string;
+}
+
+export interface ProposalTexts {
+  introductionText: string;
+  objectiveText: string;
+  servicesText: string;
+  whyText: string;
+}
+
 export interface ProposalData {
   clientName: string;
   companyName: string;
@@ -33,6 +47,8 @@ export interface ProposalData {
   };
   observations: string;
   responsible: string;
+  companyConfig: CompanyConfig;
+  proposalTexts: ProposalTexts;
 }
 
 const availableAutomations: Automation[] = [
@@ -96,6 +112,18 @@ export const ProposalForm = ({ onGeneratePDF }: ProposalFormProps) => {
     selectedAutomations: {},
     observations: "",
     responsible: "Rafael Alves",
+    companyConfig: {
+      name: "Quantum Soluções",
+      address: "Rua Antônio de Albuquerque, 330 - Sala 901, BH/MG",
+      email: "brenda@quantumtecnologia.com.br",
+      phone: "(31) 9588-5000",
+    },
+    proposalTexts: {
+      introductionText: "Em um mercado cada vez mais dinâmico, a agilidade e a personalização do atendimento fazem toda a diferença. Pensando nisso, desenvolvemos soluções de automação que integram tecnologia e inteligência artificial para transformar o relacionamento com seus clientes, otimizar processos e garantir resultados reais.",
+      objectiveText: "Mesmo quem não domina tecnologia possa usufruir de soluções eficientes, escaláveis e simples de operar. Ao escolher implementar essa automação completa, você não está apenas otimizando processos.\n\nVocê está eliminando a necessidade de contratar uma nova equipe para realizar tarefas repetitivas e operacionais. Cada um dos fluxos aqui apresentados substitui com eficiência uma parte do trabalho humano, entregando o que nenhuma contratação isolada conseguiria: agilidade, consistência e disponibilidade total.",
+      servicesText: "• Configuração completa das automações selecionadas\n• Testes e validação de todos os fluxos\n• Treinamento para utilização das ferramentas\n• Suporte técnico durante a fase de implantação\n• Documentação completa dos processos\n• Manutenção e ajustes durante o primeiro mês",
+      whyText: "Ao contratar todas as automações, você garante:\n\n• Economia de escala nos custos de implantação\n• Integração perfeita entre todos os processos\n• Visão completa do relacionamento com o cliente\n• Máximo retorno sobre o investimento\n• Time dedicado ao seu projeto\n\nA automação completa transforma sua operação, liberando sua equipe para focar no que realmente importa: crescer o negócio e atender melhor seus clientes.",
+    },
   });
 
   const handleAutomationToggle = (automationId: string, checked: boolean) => {
@@ -321,6 +349,125 @@ export const ProposalForm = ({ onGeneratePDF }: ProposalFormProps) => {
               )}
             </div>
           ))}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Dados da Sua Empresa</CardTitle>
+          <CardDescription>Configure as informações da sua empresa</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="companyConfigName">Nome da Empresa</Label>
+              <Input
+                id="companyConfigName"
+                value={formData.companyConfig.name}
+                onChange={(e) => setFormData({ 
+                  ...formData, 
+                  companyConfig: { ...formData.companyConfig, name: e.target.value }
+                })}
+                placeholder="Quantum Soluções"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="companyAddress">Endereço</Label>
+              <Input
+                id="companyAddress"
+                value={formData.companyConfig.address}
+                onChange={(e) => setFormData({ 
+                  ...formData, 
+                  companyConfig: { ...formData.companyConfig, address: e.target.value }
+                })}
+                placeholder="Rua, número - cidade/UF"
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="companyEmail">E-mail da Empresa</Label>
+              <Input
+                id="companyEmail"
+                type="email"
+                value={formData.companyConfig.email}
+                onChange={(e) => setFormData({ 
+                  ...formData, 
+                  companyConfig: { ...formData.companyConfig, email: e.target.value }
+                })}
+                placeholder="contato@empresa.com.br"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="companyPhone">Telefone da Empresa</Label>
+              <Input
+                id="companyPhone"
+                value={formData.companyConfig.phone}
+                onChange={(e) => setFormData({ 
+                  ...formData, 
+                  companyConfig: { ...formData.companyConfig, phone: e.target.value }
+                })}
+                placeholder="(31) 9588-5000"
+              />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Textos da Proposta</CardTitle>
+          <CardDescription>Personalize os textos que aparecem na proposta</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="introText">Texto de Introdução</Label>
+            <Textarea
+              id="introText"
+              value={formData.proposalTexts.introductionText}
+              onChange={(e) => setFormData({ 
+                ...formData, 
+                proposalTexts: { ...formData.proposalTexts, introductionText: e.target.value }
+              })}
+              rows={3}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="objectiveText">Texto do Objetivo</Label>
+            <Textarea
+              id="objectiveText"
+              value={formData.proposalTexts.objectiveText}
+              onChange={(e) => setFormData({ 
+                ...formData, 
+                proposalTexts: { ...formData.proposalTexts, objectiveText: e.target.value }
+              })}
+              rows={4}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="servicesText">Serviços Atribuídos</Label>
+            <Textarea
+              id="servicesText"
+              value={formData.proposalTexts.servicesText}
+              onChange={(e) => setFormData({ 
+                ...formData, 
+                proposalTexts: { ...formData.proposalTexts, servicesText: e.target.value }
+              })}
+              rows={4}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="whyText">Por que contratar?</Label>
+            <Textarea
+              id="whyText"
+              value={formData.proposalTexts.whyText}
+              onChange={(e) => setFormData({ 
+                ...formData, 
+                proposalTexts: { ...formData.proposalTexts, whyText: e.target.value }
+              })}
+              rows={5}
+            />
+          </div>
         </CardContent>
       </Card>
 

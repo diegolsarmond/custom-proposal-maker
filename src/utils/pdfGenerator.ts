@@ -1,6 +1,7 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { ProposalData } from "@/components/ProposalForm";
+import logoImage from "@/assets/quantum-logo.png";
 
 const availableAutomations = [
   {
@@ -44,10 +45,13 @@ export const generateProposalPDF = (data: ProposalData) => {
   doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
   doc.rect(0, 0, 210, 40, "F");
 
+  // Add logo
+  doc.addImage(logoImage, "PNG", 20, 8, 25, 25);
+
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(24);
   doc.setFont("helvetica", "bold");
-  doc.text("Quantum Soluções", 105, 20, { align: "center" });
+  doc.text(data.companyConfig.name, 105, 20, { align: "center" });
 
   doc.setFontSize(32);
   doc.text("PROPOSTA COMERCIAL", 105, 32, { align: "center" });
@@ -79,9 +83,9 @@ export const generateProposalPDF = (data: ProposalData) => {
   doc.roundedRect(15, 115, 180, 25, 3, 3, "F");
   doc.setFontSize(10);
   doc.setFont("helvetica", "italic");
-  doc.text("Rua Antônio de Albuquerque, 330 - Sala 901, BH/MG", 105, 125, { align: "center" });
-  doc.text("Email: brenda@quantumtecnologia.com.br", 105, 132, { align: "center" });
-  doc.text("Telefone: (31) 9588-5000", 105, 139, { align: "center" });
+  doc.text(data.companyConfig.address, 105, 125, { align: "center" });
+  doc.text(`Email: ${data.companyConfig.email}`, 105, 132, { align: "center" });
+  doc.text(`Telefone: ${data.companyConfig.phone}`, 105, 139, { align: "center" });
 
   // Page 2 - Introduction
   doc.addPage();
@@ -97,9 +101,7 @@ export const generateProposalPDF = (data: ProposalData) => {
 
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
-  const introText = `Em um mercado cada vez mais dinâmico, a agilidade e a personalização do atendimento fazem toda a diferença. Pensando nisso, desenvolvemos soluções de automação que integram tecnologia e inteligência artificial para transformar o relacionamento com seus clientes, otimizar processos e garantir resultados reais.`;
-
-  const splitIntro = doc.splitTextToSize(introText, 170);
+  const splitIntro = doc.splitTextToSize(data.proposalTexts.introductionText, 170);
   doc.text(splitIntro, 20, 40);
 
   doc.setFontSize(10);
@@ -129,11 +131,7 @@ export const generateProposalPDF = (data: ProposalData) => {
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(textColor[0], textColor[1], textColor[2]);
-  const objectiveText = `Mesmo quem não domina tecnologia possa usufruir de soluções eficientes, escaláveis e simples de operar. Ao escolher implementar essa automação completa, você não está apenas otimizando processos.
-
-Você está eliminando a necessidade de contratar uma nova equipe para realizar tarefas repetitivas e operacionais. Cada um dos fluxos aqui apresentados substitui com eficiência uma parte do trabalho humano, entregando o que nenhuma contratação isolada conseguiria: agilidade, consistência e disponibilidade total.`;
-
-  const splitObjective = doc.splitTextToSize(objectiveText, 170);
+  const splitObjective = doc.splitTextToSize(data.proposalTexts.objectiveText, 170);
   doc.text(splitObjective, 20, 115);
 
   // Page 3 - Investment
@@ -225,15 +223,7 @@ Você está eliminando a necessidade de contratar uma nova equipe para realizar 
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(textColor[0], textColor[1], textColor[2]);
-
-  const servicesText = `• Configuração completa das automações selecionadas
-• Testes e validação de todos os fluxos
-• Treinamento para utilização das ferramentas
-• Suporte técnico durante a fase de implantação
-• Documentação completa dos processos
-• Manutenção e ajustes durante o primeiro mês`;
-
-  const splitServices = doc.splitTextToSize(servicesText, 170);
+  const splitServices = doc.splitTextToSize(data.proposalTexts.servicesText, 170);
   doc.text(splitServices, 20, 30);
 
   doc.setFontSize(16);
@@ -244,18 +234,7 @@ Você está eliminando a necessidade de contratar uma nova equipe para realizar 
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(textColor[0], textColor[1], textColor[2]);
-
-  const whyText = `Ao contratar todas as automações, você garante:
-
-• Economia de escala nos custos de implantação
-• Integração perfeita entre todos os processos
-• Visão completa do relacionamento com o cliente
-• Máximo retorno sobre o investimento
-• Time dedicado ao seu projeto
-
-A automação completa transforma sua operação, liberando sua equipe para focar no que realmente importa: crescer o negócio e atender melhor seus clientes.`;
-
-  const splitWhy = doc.splitTextToSize(whyText, 170);
+  const splitWhy = doc.splitTextToSize(data.proposalTexts.whyText, 170);
   doc.text(splitWhy, 20, 85);
 
   if (data.observations) {
