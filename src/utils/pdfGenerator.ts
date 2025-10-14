@@ -42,47 +42,43 @@ export const generateProposalPDF = (data: ProposalData) => {
   const textColor: [number, number, number] = [30, 41, 59];
   const formattedDate = new Date(data.date).toLocaleDateString("pt-BR");
 
-  // Header compacto
+  // Header moderno
   doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-  doc.rect(0, 0, 210, 20, "F");
+  doc.rect(0, 0, 210, 25, "F");
   
-  doc.addImage(logoImage, "PNG", 8, 4, 12, 12);
+  doc.addImage(logoImage, "PNG", 10, 5, 15, 15);
   
   doc.setTextColor(255, 255, 255);
-  doc.setFontSize(16);
+  doc.setFontSize(18);
   doc.setFont("helvetica", "bold");
-  doc.text(data.companyConfig.name, 25, 10);
-  doc.setFontSize(12);
-  doc.text("PROPOSTA COMERCIAL", 25, 16);
-
-  // Informações do cliente - Coluna esquerda
-  doc.setTextColor(textColor[0], textColor[1], textColor[2]);
-  doc.setFontSize(8);
-  doc.setFont("helvetica", "bold");
-  doc.text("CLIENTE:", 8, 28);
+  doc.text(data.companyConfig.name, 30, 13);
+  doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
-  doc.text(data.clientName, 8, 32);
-  doc.text(data.companyName, 8, 36);
+  doc.text("PROPOSTA COMERCIAL", 30, 19);
+
+  // Informações do cliente
+  doc.setTextColor(textColor[0], textColor[1], textColor[2]);
+  doc.setFontSize(11);
+  doc.setFont("helvetica", "bold");
+  doc.text("CLIENTE", 10, 35);
+  
+  doc.setFontSize(9);
+  doc.setFont("helvetica", "normal");
+  doc.text(data.clientName, 10, 42);
+  doc.text(data.companyName, 10, 48);
   if (data.document) {
-    doc.text(`${data.document.length > 14 ? "CNPJ" : "CPF"}: ${data.document}`, 8, 40);
+    doc.text(`${data.document.length > 14 ? "CNPJ" : "CPF"}: ${data.document}`, 10, 54);
   }
   if (data.segment) {
-    doc.text(`Segmento: ${data.segment}`, 8, 44);
+    doc.text(`Segmento: ${data.segment}`, 10, 60);
   }
-
-  // Informações da empresa - Coluna direita
-  doc.setFont("helvetica", "bold");
-  doc.text("CONTATO:", 110, 28);
-  doc.setFont("helvetica", "normal");
-  doc.text(data.companyConfig.email, 110, 32);
-  doc.text(data.companyConfig.phone, 110, 36);
-  doc.text(`Data: ${formattedDate}`, 110, 40);
+  doc.text(`Data: ${formattedDate}`, 10, 66);
 
   // Seção de Investimento - Tabela compacta
-  doc.setFontSize(10);
+  doc.setFontSize(12);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-  doc.text("INVESTIMENTO", 8, 52);
+  doc.text("INVESTIMENTO", 10, 75);
 
   const tableData: any[] = [];
   let totalImplantation = 0;
@@ -116,120 +112,130 @@ export const generateProposalPDF = (data: ProposalData) => {
   ]);
 
   autoTable(doc, {
-    startY: 56,
+    startY: 80,
     head: [["Automação", "Implantação", "Recorrência"]],
     body: tableData,
     theme: "grid",
     styles: {
-      fontSize: 7,
-      cellPadding: 1.5,
+      fontSize: 8,
+      cellPadding: 2,
     },
     columnStyles: {
-      0: { cellWidth: 90 },
-      1: { cellWidth: 40, halign: "right" },
-      2: { cellWidth: 45, halign: "right" },
+      0: { cellWidth: 95 },
+      1: { cellWidth: 45, halign: "right" },
+      2: { cellWidth: 50, halign: "right" },
     },
     headStyles: {
       fillColor: primaryColor,
       textColor: [255, 255, 255],
-      fontSize: 7,
+      fontSize: 8,
       fontStyle: "bold",
     },
-    margin: { left: 8, right: 8 },
+    margin: { left: 10, right: 10 },
   });
 
-  const finalY = (doc as any).lastAutoTable.finalY || 56;
+  const finalY = (doc as any).lastAutoTable.finalY || 80;
 
-  // Layout em 2 colunas para o conteúdo textual
-  const leftColX = 8;
-  const rightColX = 110;
-  const colWidth = 95;
-  let currentY = finalY + 6;
+  // Layout em coluna única para melhor legibilidade
+  const textWidth = 190;
+  let currentY = finalY + 8;
 
-  // Coluna Esquerda - Introdução
-  doc.setFontSize(9);
+  // Introdução
+  doc.setFontSize(11);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-  doc.text("PROPOSTA", leftColX, currentY);
+  doc.text("PROPOSTA", 10, currentY);
   
-  doc.setFontSize(7);
+  doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(textColor[0], textColor[1], textColor[2]);
-  const splitIntro = doc.splitTextToSize(data.proposalTexts.introductionText, colWidth);
-  doc.text(splitIntro, leftColX, currentY + 4);
+  const splitIntro = doc.splitTextToSize(data.proposalTexts.introductionText, textWidth);
+  doc.text(splitIntro, 10, currentY + 6);
   
-  const introHeight = splitIntro.length * 2.5;
-  let leftY = currentY + 4 + introHeight + 3;
+  currentY += 6 + splitIntro.length * 3.5 + 4;
 
   // Ferramentas
-  doc.setFontSize(7);
+  doc.setFontSize(8);
   doc.setFont("helvetica", "bold");
-  doc.text("Ferramentas:", leftColX, leftY);
+  doc.text("Ferramentas:", 10, currentY);
   doc.setFont("helvetica", "normal");
-  doc.text("n8n, Typebot, Evolution API", leftColX, leftY + 3);
-  leftY += 8;
+  doc.text(" n8n, Typebot, Evolution API", 32, currentY);
+  currentY += 6;
 
   // Objetivo
-  doc.setFontSize(9);
+  doc.setFontSize(11);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-  doc.text("OBJETIVO", leftColX, leftY);
+  doc.text("OBJETIVO", 10, currentY);
   
-  doc.setFontSize(7);
+  doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(textColor[0], textColor[1], textColor[2]);
-  const splitObjective = doc.splitTextToSize(data.proposalTexts.objectiveText, colWidth);
-  doc.text(splitObjective, leftColX, leftY + 4);
+  const splitObjective = doc.splitTextToSize(data.proposalTexts.objectiveText, textWidth);
+  doc.text(splitObjective, 10, currentY + 6);
 
-  // Coluna Direita - Serviços
-  let rightY = currentY;
-  doc.setFontSize(9);
+  currentY += 6 + splitObjective.length * 3.5 + 4;
+
+  // Serviços
+  doc.setFontSize(11);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-  doc.text("SERVIÇOS", rightColX, rightY);
+  doc.text("SERVIÇOS", 10, currentY);
   
-  doc.setFontSize(7);
+  doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(textColor[0], textColor[1], textColor[2]);
-  const splitServices = doc.splitTextToSize(data.proposalTexts.servicesText, colWidth);
-  doc.text(splitServices, rightColX, rightY + 4);
+  const splitServices = doc.splitTextToSize(data.proposalTexts.servicesText, textWidth);
+  doc.text(splitServices, 10, currentY + 6);
   
-  const servicesHeight = splitServices.length * 2.5;
-  rightY = rightY + 4 + servicesHeight + 5;
+  currentY += 6 + splitServices.length * 3.5 + 4;
 
   // Por que contratar
-  doc.setFontSize(9);
+  doc.setFontSize(11);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-  doc.text("POR QUE CONTRATAR?", rightColX, rightY);
+  doc.text("POR QUE CONTRATAR?", 10, currentY);
   
-  doc.setFontSize(7);
+  doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(textColor[0], textColor[1], textColor[2]);
-  const splitWhy = doc.splitTextToSize(data.proposalTexts.whyText, colWidth);
-  doc.text(splitWhy, rightColX, rightY + 4);
+  const splitWhy = doc.splitTextToSize(data.proposalTexts.whyText, textWidth);
+  doc.text(splitWhy, 10, currentY + 6);
 
-  rightY = rightY + 4 + splitWhy.length * 2.5 + 5;
+  currentY += 6 + splitWhy.length * 3.5 + 4;
 
   // Observações (se houver)
   if (data.observations) {
-    doc.setFontSize(9);
+    doc.setFontSize(11);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-    doc.text("OBSERVAÇÕES", rightColX, rightY);
+    doc.text("OBSERVAÇÕES", 10, currentY);
     
-    doc.setFontSize(7);
+    doc.setFontSize(9);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(textColor[0], textColor[1], textColor[2]);
-    const splitObs = doc.splitTextToSize(data.observations, colWidth);
-    doc.text(splitObs, rightColX, rightY + 4);
+    const splitObs = doc.splitTextToSize(data.observations, textWidth);
+    doc.text(splitObs, 10, currentY + 6);
   }
 
-  // Footer
-  doc.setFontSize(6);
+  // Rodapé moderno com informações de contato
+  doc.setFillColor(245, 245, 245);
+  doc.rect(0, 270, 210, 27, "F");
+  
+  doc.setFontSize(8);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(textColor[0], textColor[1], textColor[2]);
+  doc.text(data.companyConfig.name, 105, 276, { align: "center" });
+  
+  doc.setFontSize(8);
+  doc.setFont("helvetica", "normal");
+  doc.text(data.companyConfig.address, 105, 281, { align: "center" });
+  doc.text(`${data.companyConfig.email} | ${data.companyConfig.phone}`, 105, 286, { align: "center" });
+  
+  doc.setFontSize(7);
   doc.setFont("helvetica", "italic");
   doc.setTextColor(100, 100, 100);
-  doc.text(`Proposta elaborada por: ${data.responsible} | Válida por 30 dias a partir de ${formattedDate}`, 105, 290, { align: "center" });
+  doc.text(`Proposta elaborada por: ${data.responsible} | Válida por 30 dias a partir de ${formattedDate}`, 105, 291, { align: "center" });
 
   const fileName = `Proposta_${data.clientName.replace(/\s+/g, "_")}_${formattedDate.replace(/\//g, "-")}.pdf`;
   doc.save(fileName);
