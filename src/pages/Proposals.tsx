@@ -101,7 +101,8 @@ export default function Proposals() {
         *,
         products (
           id,
-          name
+          name,
+          description
         )
       `)
       .eq("proposal_id", proposal.id);
@@ -113,11 +114,14 @@ export default function Proposals() {
 
     const selectedAutomations: any = {};
     items.forEach((item: any) => {
-      selectedAutomations[item.products.id] = {
+      const product = item.products;
+      if (!product) return;
+      selectedAutomations[product.id] = {
         selected: true,
         implantation: Number(item.implantation),
         recurrence: Number(item.recurrence),
-        name: item.products.name,
+        name: product.name,
+        description: product.description,
       };
     });
 
