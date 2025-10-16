@@ -37,6 +37,11 @@ interface Product {
   default_recurrence: number;
 }
 
+interface Profile {
+  id: string;
+  full_name: string | null;
+}
+
 const formatCurrency = (value: number) =>
   value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -48,6 +53,7 @@ const parseCurrency = (value: string) => {
 export default function NewProposal() {
   const [clients, setClients] = useState<Client[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
+  const [users, setUsers] = useState<Profile[]>([]);
   const [selectedClientId, setSelectedClientId] = useState("");
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const { user } = useAuth();
@@ -95,6 +101,7 @@ export default function NewProposal() {
   useEffect(() => {
     fetchClients();
     fetchProducts();
+    fetchUsers();
   }, []);
 
   useEffect(() => {
@@ -142,6 +149,14 @@ export default function NewProposal() {
       .select("*")
       .order("name");
     if (data) setProducts(data);
+  };
+
+  const fetchUsers = async () => {
+    const { data } = await supabase
+      .from("profiles")
+      .select("id, full_name")
+      .order("full_name");
+    if (data) setUsers(data);
   };
 
   const fetchProposal = async (proposalId: string) => {
@@ -537,13 +552,36 @@ export default function NewProposal() {
                   </div>
                   <div>
                     <Label htmlFor="responsible">Responsável</Label>
-                    <Input
-                      id="responsible"
-                      value={formData.responsible}
-                      onChange={(e) =>
-                        setFormData({ ...formData, responsible: e.target.value })
+                    <Select
+                      value={formData.responsible || undefined}
+                      onValueChange={(value) =>
+                        setFormData({ ...formData, responsible: value })
                       }
-                    />
+                    >
+                      <SelectTrigger id="responsible">
+                        <SelectValue placeholder="Selecione o responsável" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {users
+                          .filter((user) => user.full_name)
+                          .map((user) => (
+                            <SelectItem
+                              key={user.id}
+                              value={user.full_name as string}
+                            >
+                              {user.full_name}
+                            </SelectItem>
+                          ))}
+                        {formData.responsible &&
+                          !users.some(
+                            (user) => user.full_name === formData.responsible,
+                          ) && (
+                            <SelectItem value={formData.responsible}>
+                              {formData.responsible}
+                            </SelectItem>
+                          )}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </CardContent>
               </Card>
