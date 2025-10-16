@@ -41,6 +41,9 @@ export const generateProposalPDF = (data: ProposalData) => {
   const primaryColor: [number, number, number] = [37, 99, 235];
   const textColor: [number, number, number] = [30, 41, 59];
   const formattedDate = new Date(data.date).toLocaleDateString("pt-BR");
+  const proposalLabel = data.proposalNumber
+    ? `PROPOSTA COMERCIAL ${data.proposalNumber}`
+    : "PROPOSTA COMERCIAL";
 
   // Header moderno
   doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
@@ -54,7 +57,7 @@ export const generateProposalPDF = (data: ProposalData) => {
   doc.text(data.companyConfig.name, 30, 13);
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
-  doc.text("PROPOSTA COMERCIAL", 30, 19);
+  doc.text(proposalLabel, 30, 19);
 
   // Informações do cliente
   doc.setTextColor(textColor[0], textColor[1], textColor[2]);
@@ -73,6 +76,9 @@ export const generateProposalPDF = (data: ProposalData) => {
     doc.text(`Segmento: ${data.segment}`, 10, 60);
   }
   doc.text(`Data: ${formattedDate}`, 10, 66);
+  if (data.proposalNumber) {
+    doc.text(`Proposta nº: ${data.proposalNumber}`, 10, 72);
+  }
 
   // Seção de Investimento - Tabela compacta
   doc.setFontSize(12);

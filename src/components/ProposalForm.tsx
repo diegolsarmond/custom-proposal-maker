@@ -38,6 +38,7 @@ export interface ProposalData {
   phone: string;
   date: string;
   segment: string;
+  proposalNumber: string;
   selectedAutomations: {
     [key: string]: {
       selected: boolean;
@@ -109,6 +110,7 @@ export const ProposalForm = ({ onGeneratePDF }: ProposalFormProps) => {
     phone: "",
     date: new Date().toISOString().split("T")[0],
     segment: "",
+    proposalNumber: "",
     selectedAutomations: {},
     observations: "",
     responsible: "Rafael Alves",

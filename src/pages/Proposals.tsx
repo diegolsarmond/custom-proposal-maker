@@ -20,6 +20,7 @@ interface Proposal {
   date: string;
   responsible: string;
   created_at: string;
+  proposal_number: string;
   clients: {
     name: string;
     company_name: string;
@@ -124,6 +125,7 @@ export default function Proposals() {
       phone: proposalData.clients.phone || "",
       date: proposalData.date,
       segment: proposalData.clients.segment || "",
+      proposalNumber: proposalData.proposal_number,
       selectedAutomations,
       observations: proposalData.observations || "",
       responsible: proposalData.responsible,
@@ -162,6 +164,7 @@ export default function Proposals() {
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead>Número</TableHead>
               <TableHead>Cliente</TableHead>
               <TableHead>Empresa</TableHead>
               <TableHead>Data</TableHead>
@@ -172,19 +175,22 @@ export default function Proposals() {
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center">
+                <TableCell colSpan={6} className="text-center">
                   Carregando...
                 </TableCell>
               </TableRow>
             ) : proposals.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center">
+                <TableCell colSpan={6} className="text-center">
                   Nenhuma proposta cadastrada
                 </TableCell>
               </TableRow>
             ) : (
               proposals.map((proposal) => (
                 <TableRow key={proposal.id}>
+                  <TableCell className="font-medium">
+                    {proposal.proposal_number}
+                  </TableCell>
                   <TableCell className="font-medium">
                     {proposal.clients.name}
                   </TableCell>

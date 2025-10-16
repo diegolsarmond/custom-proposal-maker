@@ -182,8 +182,11 @@ export type Database = {
           intro_text: string
           objective_text: string
           observations: string | null
+          proposal_number: string
           responsible: string
           services_text: string
+          sequence_number: number
+          sequence_year: number
           updated_at: string
           why_text: string
         }
@@ -200,8 +203,11 @@ export type Database = {
           intro_text: string
           objective_text: string
           observations?: string | null
+          proposal_number?: string
           responsible: string
           services_text: string
+          sequence_number?: number
+          sequence_year?: number
           updated_at?: string
           why_text: string
         }
@@ -218,8 +224,11 @@ export type Database = {
           intro_text?: string
           objective_text?: string
           observations?: string | null
+          proposal_number?: string
           responsible?: string
           services_text?: string
+          sequence_number?: number
+          sequence_year?: number
           updated_at?: string
           why_text?: string
         }
