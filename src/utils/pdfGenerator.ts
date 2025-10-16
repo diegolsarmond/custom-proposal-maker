@@ -213,26 +213,42 @@ export const generateProposalPDF = async (
   const rows: any[] = [];
   let totalImplant = 0;
   let totalRec = 0;
+  const implantationLabel = data.pricingLabels?.implantation || "Implantação (R$)";
+  const recurrenceLabel = data.pricingLabels?.recurrence || "Recorrência";
+  const recurrenceSuffix =
+    data.pricingLabels?.recurrence === "Manutenção Mensal" ? "" : "/mês";
+  const formatCurrency = (value: number | string, suffix = "") => {
+    const numeric = Number(value || 0);
+    return numeric === 0
+      ? "-"
+      : `R$ ${numeric.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}${suffix}`;
+  };
   Object.values(data.selectedAutomations).forEach((v: any) => {
     if (v.selected) {
       rows.push([
         v.name,
-        `R$ ${v.implantation.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`,
-        `R$ ${v.recurrence.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}/mês`,
+        formatCurrency(v.implantation),
+        formatCurrency(v.recurrence, recurrenceSuffix),
       ]);
-      totalImplant += v.implantation;
-      totalRec += v.recurrence;
+      totalImplant += Number(v.implantation || 0);
+      totalRec += Number(v.recurrence || 0);
     }
   });
   if (rows.length) {
     rows.push([
       { content: "TOTAL", styles: { fontStyle: "bold", fillColor: light } },
-      { content: `R$ ${totalImplant.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`, styles: { halign: "right", fontStyle: "bold", fillColor: light } },
-      { content: `R$ ${totalRec.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}/mês`, styles: { halign: "right", fontStyle: "bold", fillColor: light } },
+      {
+        content: formatCurrency(totalImplant),
+        styles: { halign: "right", fontStyle: "bold", fillColor: light },
+      },
+      {
+        content: formatCurrency(totalRec, recurrenceSuffix),
+        styles: { halign: "right", fontStyle: "bold", fillColor: light },
+      },
     ]);
     autoTable(doc, {
       startY: y + 2,
-      head: [["Automação", "Implantação", "Recorrência"]],
+      head: [["Automação", implantationLabel, recurrenceLabel]],
       body: rows,
       theme: "grid",
       styles: { fontSize: 9, cellPadding: 3 },
