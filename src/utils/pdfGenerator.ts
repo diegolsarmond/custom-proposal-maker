@@ -37,7 +37,10 @@ const availableAutomations = [
   },
 ];
 
-export const generateProposalPDF = (data: ProposalData) => {
+export const generateProposalPDF = (
+  data: ProposalData,
+  options?: { openInNewTab?: boolean }
+) => {
   const doc = new jsPDF();
   const primaryColor: [number, number, number] = [67, 56, 202];
   const accentColor: [number, number, number] = [14, 165, 233];
@@ -290,5 +293,11 @@ export const generateProposalPDF = (data: ProposalData) => {
   doc.text(`Proposta elaborada por: ${data.responsible} | Válida por 30 dias a partir de ${formattedDate}`, 105, 291, { align: "center" });
 
   const fileName = `Proposta_${data.clientName.replace(/\s+/g, "_")}_${formattedDate.replace(/\//g, "-")}.pdf`;
-  doc.save(fileName);
+
+  if (options?.openInNewTab && typeof window !== "undefined") {
+    const blobUrl = doc.output("bloburl");
+    window.open(blobUrl, "_blank");
+  } else {
+    doc.save(fileName);
+  }
 };
