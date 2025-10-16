@@ -46,6 +46,11 @@ export const generateProposalPDF = async (
   const light: [number, number, number] = [243, 244, 246];
   const year = new Date(data.date).getFullYear().toString();
   const formattedDate = new Date(data.date).toLocaleDateString("pt-BR");
+  const proposalIdentifier =
+    data.proposalNumber || (data.proposalId ? `${data.proposalId}/${year}` : "");
+  const proposalInfoLine = proposalIdentifier
+    ? `${proposalIdentifier} - ${formattedDate}`
+    : formattedDate;
 
   const drawContentHeader = () => {
     doc.setFillColor(primary[0], primary[1], primary[2]);
@@ -58,9 +63,13 @@ export const generateProposalPDF = async (
     doc.setFont("helvetica", "normal");
     doc.setFontSize(12);
     doc.text("Prestação de Serviço de Tecnologia", 15, 25);
-    if (data.proposalNumber) {
+    if (proposalIdentifier) {
       doc.setFontSize(12);
-      doc.text(`Nº ${data.proposalNumber}`, 195, 16, { align: "right" });
+      doc.text(`Nº ${proposalIdentifier}`, 195, 16, { align: "right" });
+    }
+    if (proposalInfoLine) {
+      doc.setFontSize(11);
+      doc.text(proposalInfoLine, 195, 25, { align: "right" });
     }
   };
 
@@ -142,12 +151,15 @@ export const generateProposalPDF = async (
   doc.setFontSize(12);
   const subtitle = `A/C: ${data.clientName} - ${data.companyName} `;
   doc.text(subtitle, 90, 166);
-  if (data.proposalNumber) {
+  if (proposalIdentifier) {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(18);
-    doc.text(`PROPOSTA Nº ${data.proposalNumber}`, 90, 176);
+    doc.text(`PROPOSTA Nº ${proposalIdentifier}`, 90, 176);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(12);
+  }
+  if (proposalInfoLine) {
+    doc.text(proposalInfoLine, 90, 184);
   }
 
   // Logo no topo direito
@@ -268,7 +280,7 @@ export const generateProposalPDF = async (
   Object.values(data.selectedAutomations).forEach((v: any) => {
     if (v.selected) {
       rows.push([
-        v.name,
+        [v.name, v.description].filter(Boolean).join(" - "),
         formatCurrency(v.implantation),
         formatCurrency(v.recurrence, recurrenceSuffix),
       ]);
@@ -306,48 +318,13 @@ export const generateProposalPDF = async (
   } else {
     y += 12;
   }
-
-  // Seção 6
-  doc.setFillColor(accent[0], accent[1], accent[2]);
-  doc.circle(10, y - 3, 3, "F");
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(11);
-  doc.setTextColor(255, 255, 255);
-  doc.text("6", 8.3, y - 1);
-  doc.setTextColor(primary[0], primary[1], primary[2]);
-  doc.setFontSize(13);
-  doc.text("Por que contratar?", 20, y);
-  y += 8;
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(11);
-  doc.setTextColor(text[0], text[1], text[2]);
-  const whyDetail = doc.splitTextToSize(data.proposalTexts.whyText || "", 180);
-  if (whyDetail.length) {
-    doc.text(whyDetail, 20, y);
-  }
-
-  if (data.observations) {
-    y += 6;
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(12);
-    doc.setTextColor(primary[0], primary[1], primary[2]);
-    doc.text("Observações", 20, y);
-    y += 6;
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(11);
-    doc.setTextColor(text[0], text[1], text[2]);
-    const observationText = doc.splitTextToSize(data.observations, 180);
-    doc.text(observationText, 20, y);
-  }
-
-
+  drawFooter();
 
   // ========= PÁGINA 4 – CONTEÚDO =========
   doc.addPage();
   drawContentHeader();
 
   y = 50;
-    drawFooter();
 
   // Seção 5
   doc.setFillColor(accent[0], accent[1], accent[2]);
@@ -369,6 +346,41 @@ export const generateProposalPDF = async (
     y += servicesDetail.length * 5.5 + 10;
   } else {
     y += 10;
+  }
+
+  // Seção 6
+  doc.setFillColor(accent[0], accent[1], accent[2]);
+  doc.circle(10, y - 3, 3, "F");
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(11);
+  doc.setTextColor(255, 255, 255);
+  doc.text("6", 8.3, y - 1);
+  doc.setTextColor(primary[0], primary[1], primary[2]);
+  doc.setFontSize(13);
+  doc.text("Por que contratar?", 20, y);
+  y += 8;
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(11);
+  doc.setTextColor(text[0], text[1], text[2]);
+  const whyDetail = doc.splitTextToSize(data.proposalTexts.whyText || "", 180);
+  if (whyDetail.length) {
+    doc.text(whyDetail, 20, y);
+    y += whyDetail.length * 5.5 + 6;
+  } else {
+    y += 6;
+  }
+
+  if (data.observations) {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.setTextColor(primary[0], primary[1], primary[2]);
+    doc.text("Observações", 20, y);
+    y += 6;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(11);
+    doc.setTextColor(text[0], text[1], text[2]);
+    const observationText = doc.splitTextToSize(data.observations, 180);
+    doc.text(observationText, 20, y);
   }
 
   
