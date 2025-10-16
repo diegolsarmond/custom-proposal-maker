@@ -247,23 +247,18 @@ export const generateProposalPDF = async (
   const recurrenceLabel = data.pricingLabels?.recurrence || "Recorrência";
   const recurrenceSuffix =
     data.pricingLabels?.recurrence === "Manutenção Mensal" ? "" : "/mês";
-  const formatCurrency = (value: number, suffix = "") =>
-    value === 0
+  const formatCurrency = (value: number | string, suffix = "") => {
+    const numeric = Number(value || 0);
+    return numeric === 0
       ? "-"
-      : `R$ ${value.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}${suffix}`;
+      : `R$ ${numeric.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}${suffix}`;
+  };
   Object.values(data.selectedAutomations).forEach((v: any) => {
     if (v.selected) {
       rows.push([
         v.name,
         formatCurrency(v.implantation),
         formatCurrency(v.recurrence, recurrenceSuffix),
-  Object.values(data.selectedAutomations || {}).forEach((v: any) => {
-    if (v && v.selected) {
-      const serviceName = [v.name, v.description].filter(Boolean).join(" - ") || "Serviço";
-      rows.push([
-        serviceName,
-        `R$ ${Number(v.implantation || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`,
-        `R$ ${Number(v.recurrence || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}/mês`,
       ]);
       totalImplant += Number(v.implantation || 0);
       totalRec += Number(v.recurrence || 0);
@@ -278,18 +273,12 @@ export const generateProposalPDF = async (
       },
       {
         content: formatCurrency(totalRec, recurrenceSuffix),
-        content: `R$ ${totalImplant.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`,
-        styles: { halign: "right", fontStyle: "bold", fillColor: light },
-      },
-      {
-        content: `R$ ${totalRec.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}/mês`,
         styles: { halign: "right", fontStyle: "bold", fillColor: light },
       },
     ]);
     autoTable(doc, {
       startY: y + 2,
       head: [["Automação", implantationLabel, recurrenceLabel]],
-      head: [["Serviço", "Implantação", "Recorrência"]],
       body: rows,
       theme: "grid",
       styles: { fontSize: 10, cellPadding: 3.5, textColor: text },
