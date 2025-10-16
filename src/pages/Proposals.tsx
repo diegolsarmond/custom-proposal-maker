@@ -114,6 +114,7 @@ export default function Proposals() {
         selected: true,
         implantation: Number(item.implantation),
         recurrence: Number(item.recurrence),
+        name: item.products.name,
       };
     });
 
