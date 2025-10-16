@@ -68,6 +68,10 @@ export default function NewProposal() {
       whyText:
         "Ao contratar todas as automações, você garante:\n\n• Economia de escala nos custos de implantação\n• Integração perfeita entre todos os processos\n• Visão completa do relacionamento com o cliente\n• Máximo retorno sobre o investimento\n• Time dedicado ao seu projeto\n\nA automação completa transforma sua operação, liberando sua equipe para focar no que realmente importa: crescer o negócio e atender melhor seus clientes.",
     },
+    pricingLabels: {
+      implantation: "Implantação (R$)",
+      recurrence: "Recorrência",
+    },
     selectedProducts: {} as Record<
       string,
       {
@@ -403,7 +407,7 @@ export default function NewProposal() {
       }
     }
 
-    const pdfData = {
+  const pdfData = {
       clientName: selectedClient.name,
       companyName: selectedClient.company_name,
       document: selectedClient.document || "",
@@ -417,6 +421,7 @@ export default function NewProposal() {
       responsible: formData.responsible,
       companyConfig: formData.companyConfig,
       proposalTexts: formData.proposalTexts,
+      pricingLabels: formData.pricingLabels,
     };
 
     generateProposalPDF(pdfData);
@@ -541,6 +546,54 @@ export default function NewProposal() {
                 <CardTitle className="text-lg">Produtos/Automações</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
+                <div className="grid sm:grid-cols-2 gap-2">
+                  <div>
+                    <Label className="text-xs">Coluna de Implantação</Label>
+                    <Select
+                      value={formData.pricingLabels.implantation}
+                      onValueChange={(value) =>
+                        setFormData({
+                          ...formData,
+                          pricingLabels: {
+                            ...formData.pricingLabels,
+                            implantation: value,
+                          },
+                        })
+                      }
+                    >
+                      <SelectTrigger className="h-8 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Implantação (R$)">Implantação (R$)</SelectItem>
+                        <SelectItem value="Desenvolvimento (R$)">Desenvolvimento (R$)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-xs">Coluna de Recorrência</Label>
+                    <Select
+                      value={formData.pricingLabels.recurrence}
+                      onValueChange={(value) =>
+                        setFormData({
+                          ...formData,
+                          pricingLabels: {
+                            ...formData.pricingLabels,
+                            recurrence: value,
+                          },
+                        })
+                      }
+                    >
+                      <SelectTrigger className="h-8 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Recorrência">Recorrência</SelectItem>
+                        <SelectItem value="Manutenção Mensal">Manutenção Mensal</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
                 <div className="grid lg:grid-cols-2 gap-3">
                   {products.map((product) => (
                     <div

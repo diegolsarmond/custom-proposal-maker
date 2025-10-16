@@ -242,6 +242,20 @@ export const generateProposalPDF = async (
   const rows: any[] = [];
   let totalImplant = 0;
   let totalRec = 0;
+  const implantationLabel = data.pricingLabels?.implantation || "Implantação (R$)";
+  const recurrenceLabel = data.pricingLabels?.recurrence || "Recorrência";
+  const recurrenceSuffix =
+    data.pricingLabels?.recurrence === "Manutenção Mensal" ? "" : "/mês";
+  const formatCurrency = (value: number, suffix = "") =>
+    value === 0
+      ? "-"
+      : `R$ ${value.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}${suffix}`;
+  Object.values(data.selectedAutomations).forEach((v: any) => {
+    if (v.selected) {
+      rows.push([
+        v.name,
+        formatCurrency(v.implantation),
+        formatCurrency(v.recurrence, recurrenceSuffix),
   Object.values(data.selectedAutomations || {}).forEach((v: any) => {
     if (v && v.selected) {
       const serviceName = [v.name, v.description].filter(Boolean).join(" - ") || "Serviço";
@@ -258,6 +272,11 @@ export const generateProposalPDF = async (
     rows.push([
       { content: "TOTAL", styles: { fontStyle: "bold", fillColor: light } },
       {
+        content: formatCurrency(totalImplant),
+        styles: { halign: "right", fontStyle: "bold", fillColor: light },
+      },
+      {
+        content: formatCurrency(totalRec, recurrenceSuffix),
         content: `R$ ${totalImplant.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`,
         styles: { halign: "right", fontStyle: "bold", fillColor: light },
       },
@@ -268,6 +287,7 @@ export const generateProposalPDF = async (
     ]);
     autoTable(doc, {
       startY: y + 2,
+      head: [["Automação", implantationLabel, recurrenceLabel]],
       head: [["Serviço", "Implantação", "Recorrência"]],
       body: rows,
       theme: "grid",
