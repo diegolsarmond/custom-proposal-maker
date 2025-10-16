@@ -354,6 +354,24 @@ export default function NewProposal() {
         return;
       }
     } else {
+      const proposalDate = new Date(formData.date);
+      const sequenceYear = proposalDate.getFullYear();
+      const { data: lastSequenceData, error: sequenceError } = await supabase
+        .from("proposals")
+        .select("sequence_number")
+        .eq("sequence_year", sequenceYear)
+        .order("sequence_number", { ascending: false })
+        .limit(1);
+
+      if (sequenceError) {
+        toast.error("Erro ao gerar número da proposta");
+        return;
+      }
+
+      const nextSequenceNumber =
+        (lastSequenceData?.[0]?.sequence_number || 0) + 1;
+      const proposalNumber = `${String(nextSequenceNumber).padStart(3, "0")}/${sequenceYear}`;
+
       const { data, error } = await supabase
         .from("proposals")
         .insert([
@@ -371,6 +389,9 @@ export default function NewProposal() {
             services_text: formData.proposalTexts.servicesText,
             why_text: formData.proposalTexts.whyText,
             created_by: user?.id,
+            sequence_number: nextSequenceNumber,
+            sequence_year: sequenceYear,
+            proposal_number: proposalNumber,
           },
         ])
         .select()
