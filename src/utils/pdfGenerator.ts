@@ -52,7 +52,7 @@ export const generateProposalPDF = (data: ProposalData) => {
   doc.addImage(logoImage, "PNG", 10, 5, 15, 15);
 
   doc.setTextColor(255, 255, 255);
-  const headerTitle = data.companyConfig.name.trim() || "Quantum Soluções";
+  const headerTitle = data.companyConfig.name?.trim() || "Quantum Soluções";
   const subtitleSources = [
     data.companyConfig.address,
     data.companyConfig.email,
