@@ -2,6 +2,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { ProposalData } from "@/components/ProposalForm";
 import logoImage from "@/assets/quantum-logo.png";
+import backgroundImage from "@/assets/pdf-background.jpg";
 
 const availableAutomations = [
   {
