@@ -37,6 +37,14 @@ interface Product {
   default_recurrence: number;
 }
 
+const formatCurrency = (value: number) =>
+  value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+const parseCurrency = (value: string) => {
+  const numericValue = value.replace(/\D/g, "");
+  return numericValue ? Number(numericValue) / 100 : 0;
+};
+
 export default function NewProposal() {
   const [clients, setClients] = useState<Client[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -628,38 +636,34 @@ export default function NewProposal() {
                           <div>
                             <Label className="text-xs">Implantação (R$)</Label>
                             <Input
-                              type="number"
-                              value={
+                              type="text"
+                              value={formatCurrency(
                                 formData.selectedProducts[product.id].implantation
-                              }
+                              )}
                               onChange={(e) =>
                                 handleProductValueChange(
                                   product.id,
                                   "implantation",
-                                  parseFloat(e.target.value) || 0
+                                  parseCurrency(e.target.value)
                                 )
                               }
-                              min="0"
-                              step="0.01"
                               className="h-8 text-sm"
                             />
                           </div>
                           <div>
                             <Label className="text-xs">Recorrência (R$)</Label>
                             <Input
-                              type="number"
-                              value={
+                              type="text"
+                              value={formatCurrency(
                                 formData.selectedProducts[product.id].recurrence
-                              }
+                              )}
                               onChange={(e) =>
                                 handleProductValueChange(
                                   product.id,
                                   "recurrence",
-                                  parseFloat(e.target.value) || 0
+                                  parseCurrency(e.target.value)
                                 )
                               }
-                              min="0"
-                              step="0.01"
                               className="h-8 text-sm"
                             />
                           </div>
