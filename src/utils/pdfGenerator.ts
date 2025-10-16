@@ -50,7 +50,7 @@ export const generateProposalPDF = async (
   const drawContentHeader = () => {
     doc.setFillColor(primary[0], primary[1], primary[2]);
     doc.rect(0, 0, 210, 35, "F");
-    doc.addImage(logoData, "PNG", 175, 7, 25, 25);
+    doc.addImage(logoData, "PNG", 177, 7, 20, 20);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(17);
     doc.setTextColor(255, 255, 255);
@@ -71,21 +71,22 @@ export const generateProposalPDF = async (
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
     doc.setTextColor(text[0], text[1], text[2]);
-    const phoneText = data.companyConfig.phone || "(31) 99248-8512";
-    doc.text(phoneText, 21, footerY + 10);
+    const phoneText = data.companyConfig.phone || "(31) 99305-4200";
+    const baseTextY = footerY + 11;
+    doc.text(phoneText, 21, baseTextY);
 
     doc.addImage(locationIcon, "PNG", 85, footerY + 6, iconSize, iconSize);
     const addressText = data.companyConfig.address || "Rua Antônio de Albuquerque, 330 - Sala 901, BH/MG";
     const addressLines = doc.splitTextToSize(addressText, 70);
     addressLines.forEach((line, index) => {
-      doc.text(line, 91, footerY + 10 + index * 4.5);
+      doc.text(line, 91, baseTextY + index * 4.5);
     });
 
     doc.addImage(globeIcon, "PNG", 155, footerY + 6, iconSize, iconSize);
     const websiteText = (data.companyConfig as any).website || "www.quantumtecnologia.com.br";
     const websiteLines = doc.splitTextToSize(websiteText, 40);
     websiteLines.forEach((line, index) => {
-      doc.text(line, 161, footerY + 10 + index * 4.5);
+      doc.text(line, 161, baseTextY + index * 4.5);
     });
   };
 
@@ -120,26 +121,26 @@ export const generateProposalPDF = async (
   // Ano vertical + divisor
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(32);
-  doc.text(year, 35, 120, { align: "center", angle: 90 });
+  doc.setFontSize(34);
+  doc.text(year, 66, 120, { align: "center", angle: 90 });
   doc.setDrawColor(255, 255, 255);
   doc.setLineWidth(0.8);
   doc.line(70, 95, 70, 165);
 
-  doc.setFontSize(28);
-  doc.text("PROPOSTA", 80, 115);
+  doc.setFontSize(36);
+  doc.text("PROPOSTA", 90, 140);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(210, 220, 235);
-  doc.setFontSize(12);
-  doc.text("C O M E R C I A L", 100, 124);
+  doc.setFontSize(15);
+  doc.text("C O M E R C I A L", 90, 150);
 
   doc.setTextColor(255, 255, 255);
-  doc.setFontSize(11);
+  doc.setFontSize(12);
   const subtitle = `A/C: ${data.clientName} - ${data.companyName} `;
-  doc.text(subtitle, 80, 138);
+  doc.text(subtitle, 90, 166);
 
   // Logo no topo direito
-  doc.addImage(logoData, "PNG", 168, 14, 22, 22);
+  doc.addImage(logoData, "PNG", 92, 88, 46, 46);
 
   // Rodapé da capa
   doc.setFont("helvetica", "normal");
