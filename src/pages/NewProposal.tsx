@@ -67,7 +67,7 @@ export default function NewProposal() {
     observations: "",
     responsible: "",
     companyConfig: {
-      name: "Quantum Soluções",
+      name: "Quantum Tecnologia",
       address: "Rua Antônio de Albuquerque, 330 - Sala 901, BH/MG",
       email: "brenda@quantumtecnologia.com.br",
       phone: "(31) 99305-4200",
