@@ -38,23 +38,29 @@ const availableAutomations = [
 
 export const generateProposalPDF = (data: ProposalData) => {
   const doc = new jsPDF();
-  const primaryColor: [number, number, number] = [37, 99, 235];
+  const primaryColor: [number, number, number] = [67, 56, 202];
+  const accentColor: [number, number, number] = [14, 165, 233];
   const textColor: [number, number, number] = [30, 41, 59];
   const formattedDate = new Date(data.date).toLocaleDateString("pt-BR");
 
   // Header moderno
   doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
   doc.rect(0, 0, 210, 25, "F");
-  
+  doc.setFillColor(accentColor[0], accentColor[1], accentColor[2]);
+  doc.rect(0, 25, 210, 2, "F");
+
   doc.addImage(logoImage, "PNG", 10, 5, 15, 15);
-  
+
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(18);
   doc.setFont("helvetica", "bold");
-  doc.text(data.companyConfig.name, 30, 13);
+  doc.text("Quantum Soluções", 30, 12);
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
-  doc.text("PROPOSTA COMERCIAL", 30, 19);
+  doc.text("Quantum Tecnologia - Soluções em Automação", 30, 18);
+  doc.setFontSize(9);
+  doc.setFont("helvetica", "bold");
+  doc.text("Proposta Comercial", 30, 23);
 
   // Informações do cliente
   doc.setTextColor(textColor[0], textColor[1], textColor[2]);
@@ -141,6 +147,9 @@ export const generateProposalPDF = (data: ProposalData) => {
   let currentY = finalY + 8;
 
   // Introdução
+  doc.setDrawColor(accentColor[0], accentColor[1], accentColor[2]);
+  doc.setLineWidth(0.6);
+  doc.line(10, currentY - 3, 200, currentY - 3);
   doc.setFontSize(11);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
@@ -163,6 +172,9 @@ export const generateProposalPDF = (data: ProposalData) => {
   currentY += 6;
 
   // Objetivo
+  doc.setDrawColor(accentColor[0], accentColor[1], accentColor[2]);
+  doc.setLineWidth(0.6);
+  doc.line(10, currentY - 3, 200, currentY - 3);
   doc.setFontSize(11);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
@@ -177,6 +189,9 @@ export const generateProposalPDF = (data: ProposalData) => {
   currentY += 6 + splitObjective.length * 3.5 + 4;
 
   // Serviços
+  doc.setDrawColor(accentColor[0], accentColor[1], accentColor[2]);
+  doc.setLineWidth(0.6);
+  doc.line(10, currentY - 3, 200, currentY - 3);
   doc.setFontSize(11);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
@@ -191,6 +206,9 @@ export const generateProposalPDF = (data: ProposalData) => {
   currentY += 6 + splitServices.length * 3.5 + 4;
 
   // Por que contratar
+  doc.setDrawColor(accentColor[0], accentColor[1], accentColor[2]);
+  doc.setLineWidth(0.6);
+  doc.line(10, currentY - 3, 200, currentY - 3);
   doc.setFontSize(11);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
@@ -206,6 +224,9 @@ export const generateProposalPDF = (data: ProposalData) => {
 
   // Observações (se houver)
   if (data.observations) {
+    doc.setDrawColor(accentColor[0], accentColor[1], accentColor[2]);
+    doc.setLineWidth(0.6);
+    doc.line(10, currentY - 3, 200, currentY - 3);
     doc.setFontSize(11);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
@@ -230,11 +251,11 @@ export const generateProposalPDF = (data: ProposalData) => {
   doc.setFontSize(8);
   doc.setFont("helvetica", "normal");
   doc.text(data.companyConfig.address, 105, 281, { align: "center" });
-  doc.text(`${data.companyConfig.email} | ${data.companyConfig.phone}`, 105, 286, { align: "center" });
-  
-  doc.setFontSize(7);
-  doc.setFont("helvetica", "italic");
-  doc.setTextColor(100, 100, 100);
+  doc.text(`contato@quantumtecnologia.com.br | ${data.companyConfig.phone}`, 105, 286, { align: "center" });
+
+  doc.setFontSize(8);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
   doc.text(`Proposta elaborada por: ${data.responsible} | Válida por 30 dias a partir de ${formattedDate}`, 105, 291, { align: "center" });
 
   const fileName = `Proposta_${data.clientName.replace(/\s+/g, "_")}_${formattedDate.replace(/\//g, "-")}.pdf`;
