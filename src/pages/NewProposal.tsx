@@ -352,6 +352,32 @@ export default function NewProposal() {
       proposalData = data;
     }
 
+    if (!proposalData?.proposal_number) {
+      const { data: proposalNumberData } = await supabase
+        .from("proposals")
+        .select("proposal_number, sequence_number, sequence_year")
+        .eq("id", proposalData.id)
+        .single();
+
+      if (proposalNumberData) {
+        proposalData = {
+          ...proposalData,
+          ...proposalNumberData,
+        };
+      }
+
+      if (
+        !proposalData.proposal_number &&
+        proposalData.sequence_number &&
+        proposalData.sequence_year
+      ) {
+        proposalData = {
+          ...proposalData,
+          proposal_number: `${String(proposalData.sequence_number).padStart(3, "0")}/${proposalData.sequence_year}`,
+        };
+      }
+    }
+
     const items = Object.entries(formData.selectedProducts)
       .filter(([_, value]) => value.selected)
       .map(([productId, value]) => ({
