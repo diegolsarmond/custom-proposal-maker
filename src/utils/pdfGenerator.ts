@@ -85,24 +85,28 @@ export const generateProposalPDF = (data: ProposalData) => {
   
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
-  doc.text(data.clientName, 10, 42);
-  doc.text(data.companyName, 10, 48);
-  if (data.document) {
-    doc.text(`${data.document.length > 14 ? "CNPJ" : "CPF"}: ${data.document}`, 10, 54);
-  }
-  if (data.segment) {
-    doc.text(`Segmento: ${data.segment}`, 10, 60);
-  }
-  doc.text(`Data: ${formattedDate}`, 10, 66);
+  let clientInfoY = 42;
+  doc.text(data.clientName, 10, clientInfoY);
+  clientInfoY += 6;
+  doc.text(data.companyName, 10, clientInfoY);
+  clientInfoY += 6;
+  const documentLabel = data.document
+    ? `${data.document.length > 14 ? "CNPJ" : "CPF"}: ${data.document}`
+    : "Documento: -";
+  doc.text(documentLabel, 10, clientInfoY);
+  clientInfoY += 6;
+  doc.text(`Segmento: ${data.segment || "-"}`, 10, clientInfoY);
+  clientInfoY += 6;
+  doc.text(`E-mail: ${data.email}`, 10, clientInfoY);
+  clientInfoY += 6;
+  doc.text(`Telefone: ${data.phone || "-"}`, 10, clientInfoY);
+  clientInfoY += 6;
+  doc.text(`Data: ${formattedDate}`, 10, clientInfoY);
+  clientInfoY += 6;
   if (data.proposalNumber) {
-    doc.text(`Proposta nº: ${data.proposalNumber}`, 10, 72);
+    doc.text(`Proposta nº: ${data.proposalNumber}`, 10, clientInfoY);
+    clientInfoY += 6;
   }
-
-  // Seção de Investimento - Tabela compacta
-  doc.setFontSize(12);
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-  doc.text("INVESTIMENTO", 10, 75);
 
   const tableData: any[] = [];
   let totalImplantation = 0;
@@ -134,34 +138,9 @@ export const generateProposalPDF = (data: ProposalData) => {
     },
   ]);
 
-  autoTable(doc, {
-    startY: 80,
-    head: [["Automação", "Implantação", "Recorrência"]],
-    body: tableData,
-    theme: "grid",
-    styles: {
-      fontSize: 8,
-      cellPadding: 2,
-    },
-    columnStyles: {
-      0: { cellWidth: 95 },
-      1: { cellWidth: 45, halign: "right" },
-      2: { cellWidth: 50, halign: "right" },
-    },
-    headStyles: {
-      fillColor: primaryColor,
-      textColor: [255, 255, 255],
-      fontSize: 8,
-      fontStyle: "bold",
-    },
-    margin: { left: 10, right: 10 },
-  });
-
-  const finalY = (doc as any).lastAutoTable.finalY || 80;
-
   // Layout em coluna única para melhor legibilidade
   const textWidth = 190;
-  let currentY = finalY + 8;
+  let currentY = clientInfoY + 8;
 
   // Introdução
   doc.setDrawColor(accentColor[0], accentColor[1], accentColor[2]);
@@ -213,14 +192,49 @@ export const generateProposalPDF = (data: ProposalData) => {
   doc.setFont("helvetica", "bold");
   doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
   doc.text("SERVIÇOS", 10, currentY);
-  
+
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(textColor[0], textColor[1], textColor[2]);
   const splitServices = doc.splitTextToSize(data.proposalTexts.servicesText, textWidth);
   doc.text(splitServices, 10, currentY + 6);
-  
+
   currentY += 6 + splitServices.length * 3.5 + 4;
+
+  // Investimento
+  doc.setDrawColor(accentColor[0], accentColor[1], accentColor[2]);
+  doc.setLineWidth(0.6);
+  doc.line(10, currentY - 3, 200, currentY - 3);
+  doc.setFontSize(11);
+  doc.setFont("helvetica", "bold");
+  doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+  doc.text("INVESTIMENTO", 10, currentY);
+
+  autoTable(doc, {
+    startY: currentY + 6,
+    head: [["Automação", "Implantação", "Recorrência"]],
+    body: tableData,
+    theme: "grid",
+    styles: {
+      fontSize: 8,
+      cellPadding: 2,
+    },
+    columnStyles: {
+      0: { cellWidth: 95 },
+      1: { cellWidth: 45, halign: "right" },
+      2: { cellWidth: 50, halign: "right" },
+    },
+    headStyles: {
+      fillColor: primaryColor,
+      textColor: [255, 255, 255],
+      fontSize: 8,
+      fontStyle: "bold",
+    },
+    margin: { left: 10, right: 10 },
+  });
+
+  const investmentFinalY = (doc as any).lastAutoTable.finalY || currentY + 6;
+  currentY = investmentFinalY + 8;
 
   // Por que contratar
   doc.setDrawColor(accentColor[0], accentColor[1], accentColor[2]);
