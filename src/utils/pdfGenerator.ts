@@ -89,11 +89,11 @@ export const generateProposalPDF = async (
   doc.setFont("helvetica", "normal");
   doc.setTextColor(210, 220, 235);
   doc.setFontSize(12);
-  doc.text("C O M E R C I A L", 80, 124);
+  doc.text("C O M E R C I A L", 100, 124);
 
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(11);
-  const subtitle = `Proposta para ${data.clientName}`;
+  const subtitle = `A/C: ${data.clientName} - ${data.companyName} `;
   doc.text(subtitle, 80, 138);
 
   // Logo no topo direito
@@ -126,7 +126,7 @@ export const generateProposalPDF = async (
 
   // Seção 1
   doc.setFillColor(accent[0], accent[1], accent[2]);
-  doc.circle(10, y - 3, 4, "F");
+  doc.circle(10, y - 3, 3, "F");
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10);
   doc.setTextColor(255, 255, 255);
@@ -144,7 +144,7 @@ export const generateProposalPDF = async (
 
   // Seção 2
   doc.setFillColor(accent[0], accent[1], accent[2]);
-  doc.circle(10, y - 3, 4, "F");
+  doc.circle(10, y - 3, 3, "F");
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10);
   doc.setTextColor(255, 255, 255);
@@ -180,7 +180,7 @@ export const generateProposalPDF = async (
 
   // Seção 3
   doc.setFillColor(accent[0], accent[1], accent[2]);
-  doc.circle(10, y - 3, 4, "F");
+  doc.circle(10, y - 3, 3, "F");
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10);
   doc.setTextColor(255, 255, 255);
@@ -200,7 +200,7 @@ export const generateProposalPDF = async (
 
   // Seção 4
   doc.setFillColor(accent[0], accent[1], accent[2]);
-  doc.circle(10, y - 3, 4, "F");
+  doc.circle(10, y - 3, 3, "F");
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10);
   doc.setTextColor(255, 255, 255);
@@ -263,7 +263,7 @@ export const generateProposalPDF = async (
 
   // Site
   doc.addImage(globeIcon, "PNG", 168, 276, iconSize, iconSize);
-  doc.text(data.companyConfig.website || "www.seusite.com.br", 174, 280);
+  doc.text(data.companyConfig.website || "www.quantumtecnologia.com.br", 174, 280);
 
   // Salvar
   const fileName = `Proposta_${data.clientName.replace(/\s+/g, "_")}_${formattedDate.replace(/\//g, "-")}.pdf`;
