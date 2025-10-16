@@ -67,7 +67,12 @@ export default function NewProposal() {
     },
     selectedProducts: {} as Record<
       string,
-      { selected: boolean; implantation: number; recurrence: number }
+      {
+        selected: boolean;
+        implantation: number;
+        recurrence: number;
+        name: string;
+      }
     >,
   });
 
@@ -111,8 +116,14 @@ export default function NewProposal() {
               selected: true,
               implantation: Number(product.default_implantation),
               recurrence: Number(product.default_recurrence),
+              name: product.name,
             }
-          : { selected: false, implantation: 0, recurrence: 0 },
+          : {
+              selected: false,
+              implantation: 0,
+              recurrence: 0,
+              name: product.name,
+            },
       },
     }));
   };

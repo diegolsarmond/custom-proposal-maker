@@ -93,15 +93,14 @@ export const generateProposalPDF = (data: ProposalData) => {
   Object.entries(data.selectedAutomations).forEach(([automationId, values]) => {
     if (values.selected) {
       const automation = availableAutomations.find((a) => a.id === automationId);
-      if (automation) {
-        tableData.push([
-          automation.name,
-          `R$ ${values.implantation.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`,
-          `R$ ${values.recurrence.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}/mês`,
-        ]);
-        totalImplantation += values.implantation;
-        totalRecurrence += values.recurrence;
-      }
+      const automationName = values.name || automation?.name || automationId;
+      tableData.push([
+        automationName,
+        `R$ ${values.implantation.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`,
+        `R$ ${values.recurrence.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}/mês`,
+      ]);
+      totalImplantation += values.implantation;
+      totalRecurrence += values.recurrence;
     }
   });
 
