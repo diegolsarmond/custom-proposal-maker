@@ -89,6 +89,56 @@ export const generateProposalPDF = async (
     });
   };
 
+  const CONTENT_START_Y = 50;
+  const CONTENT_BOTTOM_LIMIT = 260;
+  const TEXT_LINE_HEIGHT = 5.5;
+
+  let y = CONTENT_START_Y;
+
+  const goToNextContentPage = () => {
+    drawFooter();
+    doc.addPage();
+    drawContentHeader();
+    y = CONTENT_START_Y;
+  };
+
+  const ensureContentSpace = (requiredHeight: number) => {
+    if (y + requiredHeight > CONTENT_BOTTOM_LIMIT) {
+      goToNextContentPage();
+    }
+  };
+
+  const writeParagraph = (lines: string[], spacingAfter = 10) => {
+    if (!lines.length) {
+      y += spacingAfter;
+      return;
+    }
+
+    const remainingLines = [...lines];
+    while (remainingLines.length) {
+      const availableHeight = CONTENT_BOTTOM_LIMIT - y;
+      const availableLines = Math.floor(availableHeight / TEXT_LINE_HEIGHT);
+
+      if (availableLines <= 0) {
+        goToNextContentPage();
+        continue;
+      }
+
+      const chunk = remainingLines.splice(0, availableLines);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(11);
+      doc.setTextColor(text[0], text[1], text[2]);
+      doc.text(chunk, 20, y);
+      y += chunk.length * TEXT_LINE_HEIGHT;
+
+      if (remainingLines.length) {
+        goToNextContentPage();
+      }
+    }
+
+    y += spacingAfter;
+  };
+
   // ========= CAPA (modelo anexo) =========
   // Fundo gradiente
   for (let i = 0; i < 60; i++) {
@@ -154,7 +204,7 @@ export const generateProposalPDF = async (
 
   drawContentHeader();
 
-  let y = 50;
+  y = CONTENT_START_Y;
 
   // Seção 1
   doc.setFillColor(accent[0], accent[1], accent[2]);
@@ -225,7 +275,7 @@ export const generateProposalPDF = async (
   doc.addPage();
   drawContentHeader();
 
-  y = 50;
+  y = CONTENT_START_Y;
 
   // Seção 4
   doc.setFillColor(accent[0], accent[1], accent[2]);
@@ -286,6 +336,12 @@ export const generateProposalPDF = async (
   }
 
   // Seção 5
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(11);
+  doc.setTextColor(text[0], text[1], text[2]);
+  const servicesDetail = doc.splitTextToSize(data.proposalTexts.servicesText || "", 180);
+  const minimumServicesHeight = 8 + (servicesDetail.length ? TEXT_LINE_HEIGHT : 0) + 2;
+  ensureContentSpace(minimumServicesHeight);
   doc.setFillColor(accent[0], accent[1], accent[2]);
   doc.circle(10, y - 3, 3, "F");
   doc.setFont("helvetica", "bold");
@@ -296,18 +352,15 @@ export const generateProposalPDF = async (
   doc.setFontSize(13);
   doc.text("Serviços Atribuídos", 20, y);
   y += 8;
+  writeParagraph(servicesDetail);
+
+  // Seção 6
   doc.setFont("helvetica", "normal");
   doc.setFontSize(11);
   doc.setTextColor(text[0], text[1], text[2]);
-  const servicesDetail = doc.splitTextToSize(data.proposalTexts.servicesText || "", 180);
-  if (servicesDetail.length) {
-    doc.text(servicesDetail, 20, y);
-    y += servicesDetail.length * 5.5 + 10;
-  } else {
-    y += 10;
-  }
-
-  // Seção 6
+  const whyDetail = doc.splitTextToSize(data.proposalTexts.whyText || "", 180);
+  const minimumWhyHeight = 8 + (whyDetail.length ? TEXT_LINE_HEIGHT : 0) + 2;
+  ensureContentSpace(minimumWhyHeight);
   doc.setFillColor(accent[0], accent[1], accent[2]);
   doc.circle(10, y - 3, 3, "F");
   doc.setFont("helvetica", "bold");
@@ -318,13 +371,7 @@ export const generateProposalPDF = async (
   doc.setFontSize(13);
   doc.text("Por que contratar?", 20, y);
   y += 8;
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(11);
-  doc.setTextColor(text[0], text[1], text[2]);
-  const whyDetail = doc.splitTextToSize(data.proposalTexts.whyText || "", 180);
-  if (whyDetail.length) {
-    doc.text(whyDetail, 20, y);
-  }
+  writeParagraph(whyDetail, 0);
 
   drawFooter();
 
