@@ -145,6 +145,10 @@ export default function Proposals() {
         servicesText: proposalData.services_text,
         whyText: proposalData.why_text,
       },
+      pricingLabels: {
+        implantation: "Implantação (R$)",
+        recurrence: "Recorrência",
+      },
     };
 
     await generateProposalPDF(pdfData, { openInNewTab });

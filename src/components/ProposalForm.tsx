@@ -5,6 +5,13 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { FileText, Download } from "lucide-react";
 import { toast } from "sonner";
 
@@ -39,6 +46,10 @@ export interface ProposalData {
   date: string;
   segment: string;
   proposalNumber: string;
+  pricingLabels: {
+    implantation: string;
+    recurrence: string;
+  };
   selectedAutomations: {
     [key: string]: {
       selected: boolean;
@@ -112,6 +123,10 @@ export const ProposalForm = ({ onGeneratePDF }: ProposalFormProps) => {
     date: new Date().toISOString().split("T")[0],
     segment: "",
     proposalNumber: "",
+    pricingLabels: {
+      implantation: "Implantação (R$)",
+      recurrence: "Recorrência",
+    },
     selectedAutomations: {},
     observations: "",
     responsible: "Rafael Alves",
@@ -354,14 +369,62 @@ export const ProposalForm = ({ onGeneratePDF }: ProposalFormProps) => {
         </Card>
       </div>
 
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="text-lg">Automações</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="grid lg:grid-cols-2 gap-3">
-            {availableAutomations.map((automation) => (
-              <div
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg">Automações</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="grid sm:grid-cols-2 gap-2">
+              <div>
+                <Label className="text-xs">Coluna de Implantação</Label>
+                <Select
+                  value={formData.pricingLabels.implantation}
+                  onValueChange={(value) =>
+                    setFormData({
+                      ...formData,
+                      pricingLabels: {
+                        ...formData.pricingLabels,
+                        implantation: value,
+                      },
+                    })
+                  }
+                >
+                  <SelectTrigger className="h-8 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Implantação (R$)">Implantação (R$)</SelectItem>
+                    <SelectItem value="Desenvolvimento (R$)">Desenvolvimento (R$)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-xs">Coluna de Recorrência</Label>
+                <Select
+                  value={formData.pricingLabels.recurrence}
+                  onValueChange={(value) =>
+                    setFormData({
+                      ...formData,
+                      pricingLabels: {
+                        ...formData.pricingLabels,
+                        recurrence: value,
+                      },
+                    })
+                  }
+                >
+                  <SelectTrigger className="h-8 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Recorrência">Recorrência</SelectItem>
+                    <SelectItem value="Manutenção Mensal">Manutenção Mensal</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid lg:grid-cols-2 gap-3">
+              {availableAutomations.map((automation) => (
+                <div
                 key={automation.id}
                 className="border border-border rounded-lg p-3 space-y-2 hover:border-primary/50 transition-colors"
               >
