@@ -12,7 +12,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { toast } from "sonner";
-import { Plus, FileText, Trash2 } from "lucide-react";
+import { Plus, FileText, Trash2, ExternalLink } from "lucide-react";
 import { generateProposalPDF } from "@/utils/pdfGenerator";
 
 interface Proposal {
@@ -70,7 +70,10 @@ export default function Proposals() {
     }
   };
 
-  const handleGeneratePDF = async (proposal: Proposal) => {
+  const handleGeneratePDF = async (
+    proposal: Proposal,
+    openInNewTab = false
+  ) => {
     const { data: proposalData, error: proposalError } = await supabase
       .from("proposals")
       .select(`
@@ -144,7 +147,7 @@ export default function Proposals() {
       },
     };
 
-    generateProposalPDF(pdfData);
+    generateProposalPDF(pdfData, { openInNewTab });
     toast.success("PDF gerado com sucesso!");
   };
 
@@ -208,6 +211,13 @@ export default function Proposals() {
                         onClick={() => handleGeneratePDF(proposal)}
                       >
                         <FileText className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleGeneratePDF(proposal, true)}
+                      >
+                        <ExternalLink className="h-4 w-4" />
                       </Button>
                       <Button
                         variant="ghost"
