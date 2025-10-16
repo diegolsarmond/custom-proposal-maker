@@ -8,13 +8,6 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { toast } from "sonner";
 import { generateProposalPDF } from "@/utils/pdfGenerator";
 import { ArrowLeft } from "lucide-react";
@@ -557,49 +550,37 @@ export default function NewProposal() {
                 <div className="grid sm:grid-cols-2 gap-2">
                   <div>
                     <Label className="text-xs">Coluna de Implantação</Label>
-                    <Select
+                    <Input
                       value={formData.pricingLabels.implantation}
-                      onValueChange={(value) =>
+                      onChange={(e) =>
                         setFormData({
                           ...formData,
                           pricingLabels: {
                             ...formData.pricingLabels,
-                            implantation: value,
+                            implantation: e.target.value,
                           },
                         })
                       }
-                    >
-                      <SelectTrigger className="h-8 text-xs">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Implantação (R$)">Implantação (R$)</SelectItem>
-                        <SelectItem value="Desenvolvimento (R$)">Desenvolvimento (R$)</SelectItem>
-                      </SelectContent>
-                    </Select>
+                      className="h-8 text-xs"
+                      placeholder="Implantação (R$)"
+                    />
                   </div>
                   <div>
                     <Label className="text-xs">Coluna de Recorrência</Label>
-                    <Select
+                    <Input
                       value={formData.pricingLabels.recurrence}
-                      onValueChange={(value) =>
+                      onChange={(e) =>
                         setFormData({
                           ...formData,
                           pricingLabels: {
                             ...formData.pricingLabels,
-                            recurrence: value,
+                            recurrence: e.target.value,
                           },
                         })
                       }
-                    >
-                      <SelectTrigger className="h-8 text-xs">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Recorrência">Recorrência</SelectItem>
-                        <SelectItem value="Manutenção Mensal">Manutenção Mensal</SelectItem>
-                      </SelectContent>
-                    </Select>
+                      className="h-8 text-xs"
+                      placeholder="Recorrência"
+                    />
                   </div>
                 </div>
                 <div className="grid lg:grid-cols-2 gap-3">
