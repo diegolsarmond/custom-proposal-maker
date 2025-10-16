@@ -38,11 +38,13 @@ export interface ProposalData {
   phone: string;
   date: string;
   segment: string;
+  proposalNumber: string;
   selectedAutomations: {
     [key: string]: {
       selected: boolean;
       implantation: number;
       recurrence: number;
+      name?: string;
     };
   };
   observations: string;
@@ -109,6 +111,7 @@ export const ProposalForm = ({ onGeneratePDF }: ProposalFormProps) => {
     phone: "",
     date: new Date().toISOString().split("T")[0],
     segment: "",
+    proposalNumber: "",
     selectedAutomations: {},
     observations: "",
     responsible: "Rafael Alves",
@@ -139,8 +142,14 @@ export const ProposalForm = ({ onGeneratePDF }: ProposalFormProps) => {
               selected: true,
               implantation: automation.defaultImplantation,
               recurrence: automation.defaultRecurrence,
+              name: automation.name,
             }
-          : { selected: false, implantation: 0, recurrence: 0 },
+          : {
+              selected: false,
+              implantation: 0,
+              recurrence: 0,
+              name: automation.name,
+            },
       },
     }));
   };

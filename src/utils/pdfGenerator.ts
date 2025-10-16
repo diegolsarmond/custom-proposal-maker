@@ -42,6 +42,9 @@ export const generateProposalPDF = (data: ProposalData) => {
   const accentColor: [number, number, number] = [14, 165, 233];
   const textColor: [number, number, number] = [30, 41, 59];
   const formattedDate = new Date(data.date).toLocaleDateString("pt-BR");
+  const proposalLabel = data.proposalNumber
+    ? `PROPOSTA COMERCIAL ${data.proposalNumber}`
+    : "PROPOSTA COMERCIAL";
 
   // Header moderno
   doc.setFillColor(primaryColor[0], primaryColor[1], primaryColor[2]);
@@ -68,6 +71,8 @@ export const generateProposalPDF = (data: ProposalData) => {
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
   doc.text(headerSubtitle, 30, 18);
+  doc.text(proposalLabel, 30, 19);
+  doc.text("Quantum Tecnologia - Soluções em Automação", 30, 18);
   doc.setFontSize(9);
   doc.setFont("helvetica", "bold");
   doc.text("Proposta Comercial", 30, 23);
@@ -89,6 +94,9 @@ export const generateProposalPDF = (data: ProposalData) => {
     doc.text(`Segmento: ${data.segment}`, 10, 60);
   }
   doc.text(`Data: ${formattedDate}`, 10, 66);
+  if (data.proposalNumber) {
+    doc.text(`Proposta nº: ${data.proposalNumber}`, 10, 72);
+  }
 
   // Seção de Investimento - Tabela compacta
   doc.setFontSize(12);
@@ -103,15 +111,14 @@ export const generateProposalPDF = (data: ProposalData) => {
   Object.entries(data.selectedAutomations).forEach(([automationId, values]) => {
     if (values.selected) {
       const automation = availableAutomations.find((a) => a.id === automationId);
-      if (automation) {
-        tableData.push([
-          automation.name,
-          `R$ ${values.implantation.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`,
-          `R$ ${values.recurrence.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}/mês`,
-        ]);
-        totalImplantation += values.implantation;
-        totalRecurrence += values.recurrence;
-      }
+      const automationName = values.name || automation?.name || automationId;
+      tableData.push([
+        automationName,
+        `R$ ${values.implantation.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`,
+        `R$ ${values.recurrence.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}/mês`,
+      ]);
+      totalImplantation += values.implantation;
+      totalRecurrence += values.recurrence;
     }
   });
 

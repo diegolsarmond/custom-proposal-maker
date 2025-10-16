@@ -48,7 +48,7 @@ export default function NewProposal() {
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split("T")[0],
     observations: "",
-    responsible: "Rafael Alves",
+    responsible: "",
     companyConfig: {
       name: "Quantum Soluções",
       address: "Rua Antônio de Albuquerque, 330 - Sala 901, BH/MG",
@@ -67,7 +67,12 @@ export default function NewProposal() {
     },
     selectedProducts: {} as Record<
       string,
-      { selected: boolean; implantation: number; recurrence: number }
+      {
+        selected: boolean;
+        implantation: number;
+        recurrence: number;
+        name: string;
+      }
     >,
   });
 
@@ -75,6 +80,25 @@ export default function NewProposal() {
     fetchClients();
     fetchProducts();
   }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    const metadataName =
+      (user.user_metadata?.full_name || user.user_metadata?.name || "").trim();
+    if (!metadataName) return;
+    const parts = metadataName.split(" ").filter(Boolean);
+    if (parts.length === 0) return;
+    const firstName = parts[0];
+    const lastName = parts.length > 1 ? parts[parts.length - 1] : "";
+    const formattedName = lastName ? `${firstName} ${lastName}` : firstName;
+    setFormData((prev) => {
+      if (prev.responsible === formattedName) return prev;
+      return {
+        ...prev,
+        responsible: formattedName,
+      };
+    });
+  }, [user]);
 
   const fetchClients = async () => {
     const { data } = await supabase
@@ -111,8 +135,14 @@ export default function NewProposal() {
               selected: true,
               implantation: Number(product.default_implantation),
               recurrence: Number(product.default_recurrence),
+              name: product.name,
             }
-          : { selected: false, implantation: 0, recurrence: 0 },
+          : {
+              selected: false,
+              implantation: 0,
+              recurrence: 0,
+              name: product.name,
+            },
       },
     }));
   };
@@ -204,6 +234,7 @@ export default function NewProposal() {
       phone: selectedClient.phone || "",
       date: formData.date,
       segment: selectedClient.segment || "",
+      proposalNumber: proposalData.proposal_number,
       selectedAutomations: formData.selectedProducts,
       observations: formData.observations,
       responsible: formData.responsible,
@@ -212,7 +243,7 @@ export default function NewProposal() {
     };
 
     generateProposalPDF(pdfData);
-    toast.success("Proposta criada com sucesso!");
+    toast.success(`Proposta ${proposalData.proposal_number} criada com sucesso!`);
     navigate("/proposals");
   };
 
@@ -395,6 +426,86 @@ export default function NewProposal() {
                       )}
                     </div>
                   ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-lg">Textos da Proposta</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="grid lg:grid-cols-2 gap-3">
+                  <div>
+                    <Label htmlFor="introText">Texto de Introdução</Label>
+                    <Textarea
+                      id="introText"
+                      value={formData.proposalTexts.introductionText}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          proposalTexts: {
+                            ...formData.proposalTexts,
+                            introductionText: e.target.value,
+                          },
+                        })
+                      }
+                      rows={3}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="objectiveText">Texto do Objetivo</Label>
+                    <Textarea
+                      id="objectiveText"
+                      value={formData.proposalTexts.objectiveText}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          proposalTexts: {
+                            ...formData.proposalTexts,
+                            objectiveText: e.target.value,
+                          },
+                        })
+                      }
+                      rows={3}
+                    />
+                  </div>
+                </div>
+                <div className="grid lg:grid-cols-2 gap-3">
+                  <div>
+                    <Label htmlFor="servicesText">Serviços Atribuídos</Label>
+                    <Textarea
+                      id="servicesText"
+                      value={formData.proposalTexts.servicesText}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          proposalTexts: {
+                            ...formData.proposalTexts,
+                            servicesText: e.target.value,
+                          },
+                        })
+                      }
+                      rows={3}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="whyText">Por que contratar?</Label>
+                    <Textarea
+                      id="whyText"
+                      value={formData.proposalTexts.whyText}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          proposalTexts: {
+                            ...formData.proposalTexts,
+                            whyText: e.target.value,
+                          },
+                        })
+                      }
+                      rows={3}
+                    />
+                  </div>
                 </div>
               </CardContent>
             </Card>
