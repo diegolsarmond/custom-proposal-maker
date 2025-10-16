@@ -252,7 +252,7 @@ export const generateProposalPDF = async (
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
   doc.setTextColor(text[0], text[1], text[2]);
-  doc.text(data.companyConfig.phone || "(00) 0000-0000", 24, 280);
+  doc.text("(31) 99248-8512", 24, 280);
 
   // Endereço com quebra de linha
   doc.addImage(locationIcon, "PNG", 88, 276, iconSize, iconSize);
