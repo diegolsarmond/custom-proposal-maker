@@ -39,6 +39,7 @@ export interface ProposalData {
   date: string;
   segment: string;
   proposalNumber: string;
+  proposalId?: string;
   pricingLabels: {
     implantation: string;
     recurrence: string;
