@@ -14,7 +14,232 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      clients: {
+        Row: {
+          company_name: string
+          created_at: string
+          created_by: string
+          document: string | null
+          email: string
+          id: string
+          name: string
+          phone: string | null
+          segment: string | null
+          updated_at: string
+        }
+        Insert: {
+          company_name: string
+          created_at?: string
+          created_by: string
+          document?: string | null
+          email: string
+          id?: string
+          name: string
+          phone?: string | null
+          segment?: string | null
+          updated_at?: string
+        }
+        Update: {
+          company_name?: string
+          created_at?: string
+          created_by?: string
+          document?: string | null
+          email?: string
+          id?: string
+          name?: string
+          phone?: string | null
+          segment?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clients_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      products: {
+        Row: {
+          created_at: string
+          created_by: string
+          default_implantation: number
+          default_recurrence: number
+          description: string
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          default_implantation?: number
+          default_recurrence?: number
+          description: string
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          default_implantation?: number
+          default_recurrence?: number
+          description?: string
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "products_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          full_name: string
+          id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          full_name?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      proposal_items: {
+        Row: {
+          created_at: string
+          id: string
+          implantation: number
+          product_id: string
+          proposal_id: string
+          recurrence: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          implantation: number
+          product_id: string
+          proposal_id: string
+          recurrence: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          implantation?: number
+          product_id?: string
+          proposal_id?: string
+          recurrence?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proposal_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proposal_items_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: false
+            referencedRelation: "proposals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      proposals: {
+        Row: {
+          client_id: string
+          company_address: string
+          company_email: string
+          company_name: string
+          company_phone: string
+          created_at: string
+          created_by: string
+          date: string
+          id: string
+          intro_text: string
+          objective_text: string
+          observations: string | null
+          responsible: string
+          services_text: string
+          updated_at: string
+          why_text: string
+        }
+        Insert: {
+          client_id: string
+          company_address: string
+          company_email: string
+          company_name: string
+          company_phone: string
+          created_at?: string
+          created_by: string
+          date: string
+          id?: string
+          intro_text: string
+          objective_text: string
+          observations?: string | null
+          responsible: string
+          services_text: string
+          updated_at?: string
+          why_text: string
+        }
+        Update: {
+          client_id?: string
+          company_address?: string
+          company_email?: string
+          company_name?: string
+          company_phone?: string
+          created_at?: string
+          created_by?: string
+          date?: string
+          id?: string
+          intro_text?: string
+          objective_text?: string
+          observations?: string | null
+          responsible?: string
+          services_text?: string
+          updated_at?: string
+          why_text?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proposals_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proposals_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
