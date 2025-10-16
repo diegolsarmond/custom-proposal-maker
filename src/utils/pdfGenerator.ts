@@ -39,7 +39,7 @@ const availableAutomations = [
 
 export const generateProposalPDF = (
   data: ProposalData,
-  options?: { openInNewTab?: boolean }
+  options?: { openInNewTab?: boolean; targetWindow?: Window | null }
 ) => {
   const doc = new jsPDF();
   const primaryColor: [number, number, number] = [67, 56, 202];
@@ -296,7 +296,18 @@ export const generateProposalPDF = (
 
   if (options?.openInNewTab && typeof window !== "undefined") {
     const blobUrl = doc.output("bloburl");
-    window.open(blobUrl, "_blank");
+    if (options.targetWindow && !options.targetWindow.closed) {
+      options.targetWindow.location.href = blobUrl;
+      options.targetWindow.focus();
+    } else {
+      const newTab = window.open("", "_blank");
+      if (newTab) {
+        newTab.location.href = blobUrl;
+        newTab.focus();
+      } else {
+        doc.save(fileName);
+      }
+    }
   } else {
     doc.save(fileName);
   }
