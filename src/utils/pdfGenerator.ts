@@ -52,11 +52,11 @@ export const generateProposalPDF = (data: ProposalData) => {
   doc.addImage(logoImage, "PNG", 10, 5, 15, 15);
 
   doc.setTextColor(255, 255, 255);
-  const headerTitle = data.companyConfig.name?.trim() || "Quantum Soluções";
+  const headerTitle = data.companyConfig?.name?.trim() || "Quantum Soluções";
   const subtitleSources = [
-    data.companyConfig.address,
-    data.companyConfig.email,
-    data.companyConfig.phone,
+    data.companyConfig?.address,
+    data.companyConfig?.email,
+    data.companyConfig?.phone,
   ];
   const headerSubtitle =
     subtitleSources.find((value) => value && value.trim().length > 0)?.trim() ||
@@ -256,12 +256,23 @@ export const generateProposalPDF = (data: ProposalData) => {
   doc.setFontSize(8);
   doc.setFont("helvetica", "bold");
   doc.setTextColor(textColor[0], textColor[1], textColor[2]);
-  doc.text(data.companyConfig.name, 105, 276, { align: "center" });
-  
+  doc.text(data.companyConfig?.name?.trim() || "Quantum Soluções", 105, 276, {
+    align: "center",
+  });
+
   doc.setFontSize(8);
   doc.setFont("helvetica", "normal");
-  doc.text(data.companyConfig.address, 105, 281, { align: "center" });
-  doc.text(`contato@quantumtecnologia.com.br | ${data.companyConfig.phone}`, 105, 286, { align: "center" });
+  doc.text(
+    data.companyConfig?.address?.trim() ||
+      "Rua Antônio de Albuquerque, 330 - Sala 901, BH/MG",
+    105,
+    281,
+    { align: "center" }
+  );
+  const footerEmail =
+    data.companyConfig?.email?.trim() || "contato@quantumtecnologia.com.br";
+  const footerPhone = data.companyConfig?.phone?.trim() || "(31) 9588-5000";
+  doc.text(`${footerEmail} | ${footerPhone}`, 105, 286, { align: "center" });
 
   doc.setFontSize(8);
   doc.setFont("helvetica", "bold");
