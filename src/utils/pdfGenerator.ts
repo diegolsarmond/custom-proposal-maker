@@ -58,6 +58,10 @@ export const generateProposalPDF = async (
     doc.setFont("helvetica", "normal");
     doc.setFontSize(12);
     doc.text("Prestação de Serviço de Tecnologia", 15, 25);
+    if (data.proposalNumber) {
+      doc.setFontSize(12);
+      doc.text(`Nº ${data.proposalNumber}`, 195, 16, { align: "right" });
+    }
   };
 
   const drawFooter = () => {
@@ -75,11 +79,11 @@ export const generateProposalPDF = async (
     const baseTextY = footerY + 11;
     doc.text(phoneText, 21, baseTextY);
 
-    doc.addImage(locationIcon, "PNG", 85, footerY + 6, iconSize, iconSize);
+    doc.addImage(locationIcon, "PNG", 80, footerY + 6, iconSize, iconSize);
     const addressText = data.companyConfig.address || "Rua Antônio de Albuquerque, 330 - Sala 901, BH/MG";
     const addressLines = doc.splitTextToSize(addressText, 70);
     addressLines.forEach((line, index) => {
-      doc.text(line, 91, baseTextY + index * 4.5);
+      doc.text(line, 86, baseTextY + index * 4.5);
     });
 
     doc.addImage(globeIcon, "PNG", 155, footerY + 6, iconSize, iconSize);
@@ -138,17 +142,25 @@ export const generateProposalPDF = async (
   doc.setFontSize(12);
   const subtitle = `A/C: ${data.clientName} - ${data.companyName} `;
   doc.text(subtitle, 90, 166);
+  if (data.proposalNumber) {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(18);
+    doc.text(`PROPOSTA Nº ${data.proposalNumber}`, 90, 176);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(12);
+  }
 
   // Logo no topo direito
   doc.addImage(logoData, "PNG", 92, 88, 46, 46);
 
   // Rodapé da capa
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(9);
+  doc.setFontSize(11);
   doc.setTextColor(230, 235, 245);
   doc.text("Apresentado por:", 150, 275);
   doc.setFont("helvetica", "bold");
-  doc.text(data.responsible || "Equipe Comercial", 150, 282);
+  doc.setFontSize(14);
+  doc.text(data.responsible || "Quantum Tecnologia", 150, 283);
 
   // ========= PÁGINA 2 – CONTEÚDO =========
   doc.addPage();
@@ -295,6 +307,14 @@ export const generateProposalPDF = async (
     y += 12;
   }
 
+  drawFooter();
+
+  // ========= PÁGINA 4 – CONTEÚDO =========
+  doc.addPage();
+  drawContentHeader();
+
+  y = 50;
+
   // Seção 5
   doc.setFillColor(accent[0], accent[1], accent[2]);
   doc.circle(10, y - 3, 3, "F");
@@ -334,6 +354,20 @@ export const generateProposalPDF = async (
   const whyDetail = doc.splitTextToSize(data.proposalTexts.whyText || "", 180);
   if (whyDetail.length) {
     doc.text(whyDetail, 20, y);
+  }
+
+  if (data.observations) {
+    y += 6;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(12);
+    doc.setTextColor(primary[0], primary[1], primary[2]);
+    doc.text("Observações", 20, y);
+    y += 6;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(11);
+    doc.setTextColor(text[0], text[1], text[2]);
+    const observationText = doc.splitTextToSize(data.observations, 180);
+    doc.text(observationText, 20, y);
   }
 
   drawFooter();

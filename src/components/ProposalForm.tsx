@@ -133,7 +133,7 @@ export const ProposalForm = ({ onGeneratePDF }: ProposalFormProps) => {
     observations: "",
     responsible: "Rafael Alves",
     companyConfig: {
-      name: "Quantum Soluções",
+      name: "Quantum Tecnologia",
       address: "Rua Antônio de Albuquerque, 330 - Sala 901, BH/MG",
       email: "brenda@quantumtecnologia.com.br",
       phone: "(31) 99305-4200",
@@ -249,7 +249,7 @@ export const ProposalForm = ({ onGeneratePDF }: ProposalFormProps) => {
                 id="companyName"
                 value={formData.companyName}
                 onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
-                placeholder="Ex: Quantum Soluções"
+                placeholder="Ex: Quantum Tecnologia"
                 required
                 className="h-9"
               />
@@ -323,7 +323,7 @@ export const ProposalForm = ({ onGeneratePDF }: ProposalFormProps) => {
                   ...formData, 
                   companyConfig: { ...formData.companyConfig, name: e.target.value }
                 })}
-                placeholder="Quantum Soluções"
+                placeholder="Quantum Tecnologia"
                 className="h-9"
               />
             </div>
