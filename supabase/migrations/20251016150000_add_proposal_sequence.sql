@@ -30,6 +30,20 @@ ALTER TABLE public.proposals
 CREATE UNIQUE INDEX proposals_sequence_unique
   ON public.proposals (sequence_year, sequence_number);
 
+CREATE TABLE public.proposal_sequences (
+  sequence_year INTEGER PRIMARY KEY,
+  last_number INTEGER NOT NULL
+);
+
+INSERT INTO public.proposal_sequences (sequence_year, last_number)
+SELECT
+  sequence_year,
+  MAX(sequence_number)
+FROM public.proposals
+GROUP BY sequence_year
+ON CONFLICT (sequence_year) DO UPDATE
+SET last_number = EXCLUDED.last_number;
+
 CREATE OR REPLACE FUNCTION public.set_proposal_sequence()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -42,15 +56,11 @@ DECLARE
 BEGIN
   current_year := EXTRACT(YEAR FROM NEW.date)::INTEGER;
 
-  PERFORM 1
-  FROM public.proposals
-  WHERE sequence_year = current_year
-  FOR UPDATE;
-
-  SELECT COALESCE(MAX(sequence_number), 0) + 1
-  INTO next_seq
-  FROM public.proposals
-  WHERE sequence_year = current_year;
+  INSERT INTO public.proposal_sequences (sequence_year, last_number)
+  VALUES (current_year, 1)
+  ON CONFLICT (sequence_year) DO UPDATE
+    SET last_number = public.proposal_sequences.last_number + 1
+  RETURNING last_number INTO next_seq;
 
   NEW.sequence_year := current_year;
   NEW.sequence_number := next_seq;
