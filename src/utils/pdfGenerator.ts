@@ -9,10 +9,35 @@ const ICON_PHONE = "/icons/phone.png";
 const ICON_LOCATION = "/icons/location.png";
 const ICON_GLOBE = "/icons/globe.png";
 
-export const generateProposalPDF = (
+const imageCache: Record<string, string> = {};
+
+const loadImageData = async (src: string) => {
+  if (imageCache[src]) {
+    return imageCache[src];
+  }
+  const response = await fetch(src);
+  const blob = await response.blob();
+  const dataUrl = await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result as string);
+    reader.onerror = () => reject(new Error("Erro ao carregar imagem"));
+    reader.readAsDataURL(blob);
+  });
+  imageCache[src] = dataUrl;
+  return dataUrl;
+};
+
+export const generateProposalPDF = async (
   data: ProposalData,
   options?: { openInNewTab?: boolean }
 ) => {
+  const [logoData, phoneIcon, locationIcon, globeIcon] = await Promise.all([
+    loadImageData(logoImage),
+    loadImageData(ICON_PHONE),
+    loadImageData(ICON_LOCATION),
+    loadImageData(ICON_GLOBE),
+  ]);
+
   const doc = new jsPDF("p", "mm", "a4");
 
   const primary: [number, number, number] = [10, 45, 90];
@@ -54,10 +79,7 @@ export const generateProposalPDF = (
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(32);
-  doc.saveGraphicsState();
-  doc.rotate(90, { origin: [35, 120] });
-  doc.text(year, 35, 120, { align: "center" });
-  doc.restoreGraphicsState();
+  doc.text(year, 35, 120, { align: "center", angle: 90 });
   doc.setDrawColor(255, 255, 255);
   doc.setLineWidth(0.8);
   doc.line(70, 95, 70, 165);
@@ -75,7 +97,7 @@ export const generateProposalPDF = (
   doc.text(subtitle, 80, 138);
 
   // Logo no topo direito
-  doc.addImage(logoImage, "PNG", 168, 14, 22, 22);
+  doc.addImage(logoData, "PNG", 168, 14, 22, 22);
 
   // Rodapé da capa
   doc.setFont("helvetica", "normal");
@@ -91,7 +113,7 @@ export const generateProposalPDF = (
   // Header barra
   doc.setFillColor(primary[0], primary[1], primary[2]);
   doc.rect(0, 0, 210, 35, "F");
-  doc.addImage(logoImage, "PNG", 175, 7, 25, 25);
+  doc.addImage(logoData, "PNG", 175, 7, 25, 25);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(16);
   doc.setTextColor(255, 255, 255);
@@ -226,21 +248,21 @@ export const generateProposalPDF = (
 
   const iconSize = 4.5;
   // Telefone
-  doc.addImage(ICON_PHONE, "PNG", 18, 276, iconSize, iconSize);
+  doc.addImage(phoneIcon, "PNG", 18, 276, iconSize, iconSize);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(9);
   doc.setTextColor(text[0], text[1], text[2]);
   doc.text(data.companyConfig.phone || "(00) 0000-0000", 24, 280);
 
   // Endereço com quebra de linha
-  doc.addImage(ICON_LOCATION, "PNG", 88, 276, iconSize, iconSize);
+  doc.addImage(locationIcon, "PNG", 88, 276, iconSize, iconSize);
   const addr1 = data.companyConfig.address?.split(",")[0] || "Rua, nº";
   const addr2 = data.companyConfig.address?.split(",").slice(1).join(",").trim() || "Cidade, UF";
   doc.text(addr1 + ",", 105, 278, { align: "center" });
   doc.text(addr2, 105, 283, { align: "center" });
 
   // Site
-  doc.addImage(ICON_GLOBE, "PNG", 168, 276, iconSize, iconSize);
+  doc.addImage(globeIcon, "PNG", 168, 276, iconSize, iconSize);
   doc.text(data.companyConfig.website || "www.seusite.com.br", 174, 280);
 
   // Salvar
