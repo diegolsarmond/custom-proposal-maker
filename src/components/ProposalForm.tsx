@@ -114,6 +114,14 @@ interface ProposalFormProps {
   onGeneratePDF: (data: ProposalData) => void;
 }
 
+const formatCurrency = (value: number) =>
+  value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+const parseCurrency = (value: string) => {
+  const numericValue = value.replace(/\D/g, "");
+  return numericValue ? Number(numericValue) / 100 : 0;
+};
+
 export const ProposalForm = ({ onGeneratePDF }: ProposalFormProps) => {
   const [formData, setFormData] = useState<ProposalData>({
     clientName: "",
@@ -450,34 +458,34 @@ export const ProposalForm = ({ onGeneratePDF }: ProposalFormProps) => {
                     <div>
                       <Label className="text-xs">Implantação (R$)</Label>
                       <Input
-                        type="number"
-                        value={formData.selectedAutomations[automation.id].implantation}
+                        type="text"
+                        value={formatCurrency(
+                          formData.selectedAutomations[automation.id].implantation
+                        )}
                         onChange={(e) =>
                           handleAutomationValueChange(
                             automation.id,
                             "implantation",
-                            parseFloat(e.target.value) || 0
+                            parseCurrency(e.target.value)
                           )
                         }
-                        min="0"
-                        step="0.01"
                         className="h-8 text-sm"
                       />
                     </div>
                     <div>
                       <Label className="text-xs">Recorrência (R$)</Label>
                       <Input
-                        type="number"
-                        value={formData.selectedAutomations[automation.id].recurrence}
+                        type="text"
+                        value={formatCurrency(
+                          formData.selectedAutomations[automation.id].recurrence
+                        )}
                         onChange={(e) =>
                           handleAutomationValueChange(
                             automation.id,
                             "recurrence",
-                            parseFloat(e.target.value) || 0
+                            parseCurrency(e.target.value)
                           )
                         }
-                        min="0"
-                        step="0.01"
                         className="h-8 text-sm"
                       />
                     </div>
