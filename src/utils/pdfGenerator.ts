@@ -55,11 +55,22 @@ export const generateProposalPDF = (data: ProposalData) => {
   doc.addImage(logoImage, "PNG", 10, 5, 15, 15);
 
   doc.setTextColor(255, 255, 255);
+  const headerTitle = data.companyConfig.name.trim() || "Quantum Soluções";
+  const subtitleSources = [
+    data.companyConfig.address,
+    data.companyConfig.email,
+    data.companyConfig.phone,
+  ];
+  const headerSubtitle =
+    subtitleSources.find((value) => value && value.trim().length > 0)?.trim() ||
+    "Quantum Tecnologia - Soluções em Automação";
+
   doc.setFontSize(18);
   doc.setFont("helvetica", "bold");
-  doc.text("Quantum Soluções", 30, 12);
+  doc.text(headerTitle, 30, 12);
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
+  doc.text(headerSubtitle, 30, 18);
   doc.text(proposalLabel, 30, 19);
   doc.text("Quantum Tecnologia - Soluções em Automação", 30, 18);
   doc.setFontSize(9);
