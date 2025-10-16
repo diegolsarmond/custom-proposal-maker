@@ -307,36 +307,6 @@ export const generateProposalPDF = async (
     y += 12;
   }
 
-  drawFooter();
-
-  // ========= PÁGINA 4 – CONTEÚDO =========
-  doc.addPage();
-  drawContentHeader();
-
-  y = 50;
-
-  // Seção 5
-  doc.setFillColor(accent[0], accent[1], accent[2]);
-  doc.circle(10, y - 3, 3, "F");
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(11);
-  doc.setTextColor(255, 255, 255);
-  doc.text("5", 8.3, y - 1);
-  doc.setTextColor(primary[0], primary[1], primary[2]);
-  doc.setFontSize(13);
-  doc.text("Serviços Atribuídos", 20, y);
-  y += 8;
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(11);
-  doc.setTextColor(text[0], text[1], text[2]);
-  const servicesDetail = doc.splitTextToSize(data.proposalTexts.servicesText || "", 180);
-  if (servicesDetail.length) {
-    doc.text(servicesDetail, 20, y);
-    y += servicesDetail.length * 5.5 + 10;
-  } else {
-    y += 10;
-  }
-
   // Seção 6
   doc.setFillColor(accent[0], accent[1], accent[2]);
   doc.circle(10, y - 3, 3, "F");
@@ -369,6 +339,39 @@ export const generateProposalPDF = async (
     const observationText = doc.splitTextToSize(data.observations, 180);
     doc.text(observationText, 20, y);
   }
+
+
+
+  // ========= PÁGINA 4 – CONTEÚDO =========
+  doc.addPage();
+  drawContentHeader();
+
+  y = 50;
+    drawFooter();
+
+  // Seção 5
+  doc.setFillColor(accent[0], accent[1], accent[2]);
+  doc.circle(10, y - 3, 3, "F");
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(11);
+  doc.setTextColor(255, 255, 255);
+  doc.text("5", 8.3, y - 1);
+  doc.setTextColor(primary[0], primary[1], primary[2]);
+  doc.setFontSize(13);
+  doc.text("Serviços Atribuídos", 20, y);
+  y += 8;
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(11);
+  doc.setTextColor(text[0], text[1], text[2]);
+  const servicesDetail = doc.splitTextToSize(data.proposalTexts.servicesText || "", 180);
+  if (servicesDetail.length) {
+    doc.text(servicesDetail, 20, y);
+    y += servicesDetail.length * 5.5 + 10;
+  } else {
+    y += 10;
+  }
+
+  
 
   drawFooter();
 
