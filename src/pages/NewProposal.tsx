@@ -56,7 +56,7 @@ export default function NewProposal() {
       name: "Quantum Soluções",
       address: "Rua Antônio de Albuquerque, 330 - Sala 901, BH/MG",
       email: "brenda@quantumtecnologia.com.br",
-      phone: "(31) 9588-5000",
+      phone: "(31) 99305-4200",
     },
     proposalTexts: {
       introductionText:

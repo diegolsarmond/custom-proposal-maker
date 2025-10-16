@@ -120,7 +120,7 @@ export const ProposalForm = ({ onGeneratePDF }: ProposalFormProps) => {
       name: "Quantum Soluções",
       address: "Rua Antônio de Albuquerque, 330 - Sala 901, BH/MG",
       email: "brenda@quantumtecnologia.com.br",
-      phone: "(31) 9588-5000",
+      phone: "(31) 99305-4200",
     },
     proposalTexts: {
       introductionText: "Em um mercado cada vez mais dinâmico, a agilidade e a personalização do atendimento fazem toda a diferença. Pensando nisso, desenvolvemos soluções de automação que integram tecnologia e inteligência artificial para transformar o relacionamento com seus clientes, otimizar processos e garantir resultados reais.",
@@ -276,7 +276,7 @@ export const ProposalForm = ({ onGeneratePDF }: ProposalFormProps) => {
                 id="phone"
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                placeholder="(31) 9588-5000"
+                placeholder="(31) 99305-4200"
                 className="h-9"
               />
             </div>
@@ -347,7 +347,7 @@ export const ProposalForm = ({ onGeneratePDF }: ProposalFormProps) => {
                   ...formData, 
                   companyConfig: { ...formData.companyConfig, phone: e.target.value }
                 })}
-                placeholder="(31) 9588-5000"
+                placeholder="(31) 99305-4200"
                 className="h-9"
               />
             </div>
