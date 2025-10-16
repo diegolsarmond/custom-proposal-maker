@@ -47,6 +47,49 @@ export const generateProposalPDF = async (
   const year = new Date(data.date).getFullYear().toString();
   const formattedDate = new Date(data.date).toLocaleDateString("pt-BR");
 
+  const drawContentHeader = () => {
+    doc.setFillColor(primary[0], primary[1], primary[2]);
+    doc.rect(0, 0, 210, 35, "F");
+    doc.addImage(logoData, "PNG", 177, 7, 20, 20);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(17);
+    doc.setTextColor(255, 255, 255);
+    doc.text("PROPOSTA", 15, 16);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(12);
+    doc.text("Prestação de Serviço de Tecnologia", 15, 25);
+  };
+
+  const drawFooter = () => {
+    const footerY = 270;
+    const iconSize = 5;
+    doc.setDrawColor(accent[0], accent[1], accent[2]);
+    doc.setLineWidth(0.4);
+    doc.line(10, footerY, 200, footerY);
+
+    doc.addImage(phoneIcon, "PNG", 15, footerY + 6, iconSize, iconSize);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.setTextColor(text[0], text[1], text[2]);
+    const phoneText = data.companyConfig.phone || "(31) 99305-4200";
+    const baseTextY = footerY + 11;
+    doc.text(phoneText, 21, baseTextY);
+
+    doc.addImage(locationIcon, "PNG", 85, footerY + 6, iconSize, iconSize);
+    const addressText = data.companyConfig.address || "Rua Antônio de Albuquerque, 330 - Sala 901, BH/MG";
+    const addressLines = doc.splitTextToSize(addressText, 70);
+    addressLines.forEach((line, index) => {
+      doc.text(line, 91, baseTextY + index * 4.5);
+    });
+
+    doc.addImage(globeIcon, "PNG", 155, footerY + 6, iconSize, iconSize);
+    const websiteText = (data.companyConfig as any).website || "www.quantumtecnologia.com.br";
+    const websiteLines = doc.splitTextToSize(websiteText, 40);
+    websiteLines.forEach((line, index) => {
+      doc.text(line, 161, baseTextY + index * 4.5);
+    });
+  };
+
   // ========= CAPA (modelo anexo) =========
   // Fundo gradiente
   for (let i = 0; i < 60; i++) {
@@ -78,26 +121,26 @@ export const generateProposalPDF = async (
   // Ano vertical + divisor
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(32);
-  doc.text(year, 35, 120, { align: "center", angle: 90 });
+  doc.setFontSize(34);
+  doc.text(year, 66, 120, { align: "center", angle: 90 });
   doc.setDrawColor(255, 255, 255);
   doc.setLineWidth(0.8);
   doc.line(70, 95, 70, 165);
 
-  doc.setFontSize(28);
-  doc.text("PROPOSTA", 80, 115);
+  doc.setFontSize(36);
+  doc.text("PROPOSTA", 90, 140);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(210, 220, 235);
-  doc.setFontSize(12);
-  doc.text("C O M E R C I A L", 100, 124);
+  doc.setFontSize(15);
+  doc.text("C O M E R C I A L", 90, 150);
 
   doc.setTextColor(255, 255, 255);
-  doc.setFontSize(11);
+  doc.setFontSize(12);
   const subtitle = `A/C: ${data.clientName} - ${data.companyName} `;
-  doc.text(subtitle, 80, 138);
+  doc.text(subtitle, 90, 166);
 
   // Logo no topo direito
-  doc.addImage(logoData, "PNG", 168, 14, 22, 22);
+  doc.addImage(logoData, "PNG", 92, 88, 46, 46);
 
   // Rodapé da capa
   doc.setFont("helvetica", "normal");
@@ -110,17 +153,7 @@ export const generateProposalPDF = async (
   // ========= PÁGINA 2 – CONTEÚDO =========
   doc.addPage();
 
-  // Header barra
-  doc.setFillColor(primary[0], primary[1], primary[2]);
-  doc.rect(0, 0, 210, 35, "F");
-  doc.addImage(logoData, "PNG", 175, 7, 25, 25);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(16);
-  doc.setTextColor(255, 255, 255);
-  doc.text("PROPOSTA", 15, 15);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(11);
-  doc.text("Prestação de Serviço de Tecnologia", 15, 23);
+  drawContentHeader();
 
   let y = 50;
 
@@ -128,85 +161,82 @@ export const generateProposalPDF = async (
   doc.setFillColor(accent[0], accent[1], accent[2]);
   doc.circle(10, y - 3, 3, "F");
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(10);
+  doc.setFontSize(11);
   doc.setTextColor(255, 255, 255);
   doc.text("1", 8.3, y - 1);
   doc.setTextColor(primary[0], primary[1], primary[2]);
-  doc.setFontSize(12);
+  doc.setFontSize(13);
   doc.text("Proposta", 20, y);
-  y += 7;
+  y += 8;
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(10);
+  doc.setFontSize(11);
   doc.setTextColor(text[0], text[1], text[2]);
   const intro = doc.splitTextToSize(data.proposalTexts.introductionText, 180);
   doc.text(intro, 20, y);
-  y += intro.length * 5 + 8;
+  y += intro.length * 5.5 + 10;
 
   // Seção 2
   doc.setFillColor(accent[0], accent[1], accent[2]);
   doc.circle(10, y - 3, 3, "F");
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(10);
+  doc.setFontSize(11);
   doc.setTextColor(255, 255, 255);
   doc.text("2", 8.3, y - 1);
   doc.setTextColor(primary[0], primary[1], primary[2]);
-  doc.setFontSize(12);
+  doc.setFontSize(13);
   doc.text("Objetivo", 20, y);
-  y += 10;
-
-  const boxW = 42;
-  const boxH = 22;
-  const boxes = [
-    "Automação de tarefas financeiras",
-    "Ferramentas de marketing",
-    "Dashboard para gestão do negócio",
-    "Atendimento exclusivo",
-  ];
-  boxes.forEach((t, i) => {
-    const x = 10 + i * (boxW + 6);
-    doc.setFillColor(light[0], light[1], light[2]);
-    doc.rect(x, y, boxW, boxH, "F");
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(16);
-    doc.setTextColor(accent[0], accent[1], accent[2]);
-    doc.text("✔", x + 3, y + 9);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(9);
-    doc.setTextColor(text[0], text[1], text[2]);
-    const wrapped = doc.splitTextToSize(t, boxW - 10);
-    doc.text(wrapped, x + 10, y + 9);
-  });
-  y += boxH + 15;
+  y += 8;
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(11);
+  doc.setTextColor(text[0], text[1], text[2]);
+  const objective = doc.splitTextToSize(data.proposalTexts.objectiveText, 180);
+  doc.text(objective, 20, y);
+  y += objective.length * 5.5 + 10;
 
   // Seção 3
   doc.setFillColor(accent[0], accent[1], accent[2]);
   doc.circle(10, y - 3, 3, "F");
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(10);
+  doc.setFontSize(11);
   doc.setTextColor(255, 255, 255);
   doc.text("3", 8.3, y - 1);
   doc.setTextColor(primary[0], primary[1], primary[2]);
-  doc.setFontSize(12);
+  doc.setFontSize(13);
   doc.text("Serviços", 20, y);
   y += 8;
 
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(10);
+  doc.setFontSize(11);
   doc.setTextColor(text[0], text[1], text[2]);
-  doc.text("• Automação total;   • Redução de custos;", 20, y);
+  const serviceTopics = [
+    "Automação total",
+    "Redução de custos",
+    "Decisões inteligentes",
+    "Integração com outras plataformas",
+  ];
+  serviceTopics.forEach((topic) => {
+    doc.text(`• ${topic}`, 20, y);
+    y += 6;
+  });
   y += 6;
-  doc.text("• Decisões inteligentes;   • Integração com outras plataformas.", 20, y);
-  y += 15;
+
+  drawFooter();
+
+  // ========= PÁGINA 3 – CONTEÚDO =========
+  doc.addPage();
+  drawContentHeader();
+
+  y = 50;
 
   // Seção 4
   doc.setFillColor(accent[0], accent[1], accent[2]);
   doc.circle(10, y - 3, 3, "F");
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(10);
+  doc.setFontSize(11);
   doc.setTextColor(255, 255, 255);
   doc.text("4", 8.3, y - 1);
   doc.setTextColor(primary[0], primary[1], primary[2]);
-  doc.setFontSize(12);
+  doc.setFontSize(13);
   doc.text("Planos e Investimento", 20, y);
   y += 8;
 
@@ -251,35 +281,62 @@ export const generateProposalPDF = async (
       head: [["Automação", implantationLabel, recurrenceLabel]],
       body: rows,
       theme: "grid",
-      styles: { fontSize: 9, cellPadding: 3 },
+      styles: { fontSize: 10, cellPadding: 3.5, textColor: text },
       headStyles: { fillColor: primary, textColor: [255, 255, 255], fontStyle: "bold" },
       margin: { left: 10, right: 10 },
     });
+    const table = (doc as any).lastAutoTable;
+    if (table?.finalY) {
+      y = table.finalY + 12;
+    } else {
+      y += rows.length * 6 + 12;
+    }
+  } else {
+    y += 12;
   }
 
-  // Footer com ícones (imagens da pasta public)
-  doc.setDrawColor(accent[0], accent[1], accent[2]);
-  doc.setLineWidth(0.4);
-  doc.line(10, 270, 200, 270);
-
-  const iconSize = 4.5;
-  // Telefone
-  doc.addImage(phoneIcon, "PNG", 18, 276, iconSize, iconSize);
+  // Seção 5
+  doc.setFillColor(accent[0], accent[1], accent[2]);
+  doc.circle(10, y - 3, 3, "F");
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(11);
+  doc.setTextColor(255, 255, 255);
+  doc.text("5", 8.3, y - 1);
+  doc.setTextColor(primary[0], primary[1], primary[2]);
+  doc.setFontSize(13);
+  doc.text("Serviços Atribuídos", 20, y);
+  y += 8;
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(9);
+  doc.setFontSize(11);
   doc.setTextColor(text[0], text[1], text[2]);
-  doc.text("(31) 99248-8512", 24, 280);
+  const servicesDetail = doc.splitTextToSize(data.proposalTexts.servicesText || "", 180);
+  if (servicesDetail.length) {
+    doc.text(servicesDetail, 20, y);
+    y += servicesDetail.length * 5.5 + 10;
+  } else {
+    y += 10;
+  }
 
-  // Endereço com quebra de linha
-  doc.addImage(locationIcon, "PNG", 88, 276, iconSize, iconSize);
-  const addr1 = data.companyConfig.address?.split(",")[0] || "Rua, nº";
-  const addr2 = data.companyConfig.address?.split(",").slice(1).join(",").trim() || "Cidade, UF";
-  doc.text(addr1 + ",", 105, 278, { align: "center" });
-  doc.text(addr2, 105, 283, { align: "center" });
+  // Seção 6
+  doc.setFillColor(accent[0], accent[1], accent[2]);
+  doc.circle(10, y - 3, 3, "F");
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(11);
+  doc.setTextColor(255, 255, 255);
+  doc.text("6", 8.3, y - 1);
+  doc.setTextColor(primary[0], primary[1], primary[2]);
+  doc.setFontSize(13);
+  doc.text("Por que contratar?", 20, y);
+  y += 8;
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(11);
+  doc.setTextColor(text[0], text[1], text[2]);
+  const whyDetail = doc.splitTextToSize(data.proposalTexts.whyText || "", 180);
+  if (whyDetail.length) {
+    doc.text(whyDetail, 20, y);
+  }
 
-  // Site
-  doc.addImage(globeIcon, "PNG", 168, 276, iconSize, iconSize);
-  doc.text(data.companyConfig.website || "www.quantumtecnologia.com.br", 174, 280);
+  drawFooter();
 
   // Salvar
   const fileName = `Proposta_${data.clientName.replace(/\s+/g, "_")}_${formattedDate.replace(/\//g, "-")}.pdf`;
