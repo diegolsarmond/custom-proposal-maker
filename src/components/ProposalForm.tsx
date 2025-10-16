@@ -45,6 +45,7 @@ export interface ProposalData {
       implantation: number;
       recurrence: number;
       name?: string;
+      description?: string;
     };
   };
   observations: string;

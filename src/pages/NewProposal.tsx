@@ -75,6 +75,7 @@ export default function NewProposal() {
         implantation: number;
         recurrence: number;
         name: string;
+        description?: string;
       }
     >,
   });
@@ -185,7 +186,8 @@ export default function NewProposal() {
         *,
         products (
           id,
-          name
+          name,
+          description
         )
       `)
       .eq("proposal_id", proposalId);
@@ -198,12 +200,13 @@ export default function NewProposal() {
 
     const itemsList = itemsData || [];
     const selectedProducts = itemsList.reduce(
-      (acc: Record<string, { selected: boolean; implantation: number; recurrence: number; name: string }>, item) => {
+      (acc: Record<string, { selected: boolean; implantation: number; recurrence: number; name: string; description?: string }>, item) => {
         acc[item.product_id] = {
           selected: true,
           implantation: Number(item.implantation),
           recurrence: Number(item.recurrence),
           name: item.products?.name || "",
+          description: item.products?.description || "",
         };
         return acc;
       },
@@ -237,12 +240,14 @@ export default function NewProposal() {
               implantation: Number(product.default_implantation),
               recurrence: Number(product.default_recurrence),
               name: product.name,
+              description: product.description,
             }
           : {
               selected: false,
               implantation: 0,
               recurrence: 0,
               name: product.name,
+              description: product.description,
             },
       },
     }));
