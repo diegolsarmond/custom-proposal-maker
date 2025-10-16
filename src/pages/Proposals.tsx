@@ -147,7 +147,7 @@ export default function Proposals() {
       },
     };
 
-    generateProposalPDF(pdfData, { openInNewTab });
+    await generateProposalPDF(pdfData, { openInNewTab });
     toast.success("PDF gerado com sucesso!");
   };
 
