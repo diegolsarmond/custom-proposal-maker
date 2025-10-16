@@ -74,6 +74,25 @@ export default function Proposals() {
     proposal: Proposal,
     openInNewTab = false
   ) => {
+    let shouldOpenInNewTab = openInNewTab;
+    let pdfWindow: Window | null = null;
+
+    if (shouldOpenInNewTab && typeof window !== "undefined") {
+      pdfWindow = window.open("", "_blank");
+
+      if (!pdfWindow) {
+        shouldOpenInNewTab = false;
+        toast.error(
+          "Não foi possível abrir uma nova aba. O download será iniciado automaticamente."
+        );
+      }
+    }
+    const closePendingWindow = () => {
+      if (pdfWindow && !pdfWindow.closed) {
+        pdfWindow.close();
+      }
+    };
+
     const { data: proposalData, error: proposalError } = await supabase
       .from("proposals")
       .select(`
@@ -91,6 +110,7 @@ export default function Proposals() {
       .single();
 
     if (proposalError) {
+      closePendingWindow();
       toast.error("Erro ao carregar dados da proposta");
       return;
     }
@@ -107,6 +127,7 @@ export default function Proposals() {
       .eq("proposal_id", proposal.id);
 
     if (itemsError) {
+      closePendingWindow();
       toast.error("Erro ao carregar itens da proposta");
       return;
     }
@@ -147,7 +168,10 @@ export default function Proposals() {
       },
     };
 
-    generateProposalPDF(pdfData, { openInNewTab });
+    generateProposalPDF(pdfData, {
+      openInNewTab: shouldOpenInNewTab,
+      targetWindow: pdfWindow,
+    });
     toast.success("PDF gerado com sucesso!");
   };
 
