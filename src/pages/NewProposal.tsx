@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -44,6 +44,9 @@ export default function NewProposal() {
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { id } = useParams();
+  const isEditing = Boolean(id);
+  const [loadingProposal, setLoadingProposal] = useState(false);
 
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split("T")[0],
@@ -82,6 +85,18 @@ export default function NewProposal() {
   }, []);
 
   useEffect(() => {
+    if (!isEditing || !id) return;
+    fetchProposal(id);
+  }, [isEditing, id]);
+
+  useEffect(() => {
+    if (!isEditing || !selectedClientId) return;
+    if (selectedClient) return;
+    const client = clients.find((c) => c.id === selectedClientId);
+    if (client) setSelectedClient(client);
+  }, [clients, isEditing, selectedClientId, selectedClient]);
+
+  useEffect(() => {
     if (!user) return;
     const metadataName =
       (user.user_metadata?.full_name || user.user_metadata?.name || "").trim();
@@ -114,6 +129,92 @@ export default function NewProposal() {
       .select("*")
       .order("name");
     if (data) setProducts(data);
+  };
+
+  const fetchProposal = async (proposalId: string) => {
+    setLoadingProposal(true);
+    const { data, error } = await supabase
+      .from("proposals")
+      .select(`
+        *,
+        clients (
+          id,
+          name,
+          company_name,
+          document,
+          email,
+          phone,
+          segment
+        )
+      `)
+      .eq("id", proposalId)
+      .single();
+
+    if (error || !data) {
+      toast.error("Erro ao carregar proposta");
+      setLoadingProposal(false);
+      return;
+    }
+
+    const clientData = (data.clients as Client) || null;
+    setSelectedClientId(data.client_id || "");
+    setSelectedClient(clientData);
+    setFormData((prev) => ({
+      ...prev,
+      date: data.date,
+      observations: data.observations || "",
+      responsible: data.responsible || "",
+      companyConfig: {
+        name: data.company_name || "",
+        address: data.company_address || "",
+        email: data.company_email || "",
+        phone: data.company_phone || "",
+      },
+      proposalTexts: {
+        introductionText: data.intro_text || "",
+        objectiveText: data.objective_text || "",
+        servicesText: data.services_text || "",
+        whyText: data.why_text || "",
+      },
+      selectedProducts: prev.selectedProducts,
+    }));
+
+    const { data: itemsData, error: itemsError } = await supabase
+      .from("proposal_items")
+      .select(`
+        *,
+        products (
+          id,
+          name
+        )
+      `)
+      .eq("proposal_id", proposalId);
+
+    if (itemsError) {
+      toast.error("Erro ao carregar itens da proposta");
+      setLoadingProposal(false);
+      return;
+    }
+
+    const itemsList = itemsData || [];
+    const selectedProducts = itemsList.reduce(
+      (acc: Record<string, { selected: boolean; implantation: number; recurrence: number; name: string }>, item) => {
+        acc[item.product_id] = {
+          selected: true,
+          implantation: Number(item.implantation),
+          recurrence: Number(item.recurrence),
+          name: item.products?.name || "",
+        };
+        return acc;
+      },
+      {}
+    );
+
+    setFormData((prev) => ({
+      ...prev,
+      selectedProducts: selectedProducts,
+    }));
+    setLoadingProposal(false);
   };
 
   const handleClientChange = (clientId: string) => {
@@ -181,10 +282,12 @@ export default function NewProposal() {
       return;
     }
 
-    const { data: proposalData, error: proposalError } = await supabase
-      .from("proposals")
-      .insert([
-        {
+    let proposalData;
+
+    if (isEditing && id) {
+      const { data, error } = await supabase
+        .from("proposals")
+        .update({
           client_id: selectedClient.id,
           date: formData.date,
           observations: formData.observations,
@@ -197,15 +300,56 @@ export default function NewProposal() {
           objective_text: formData.proposalTexts.objectiveText,
           services_text: formData.proposalTexts.servicesText,
           why_text: formData.proposalTexts.whyText,
-          created_by: user?.id,
-        },
-      ])
-      .select()
-      .single();
+        })
+        .eq("id", id)
+        .select()
+        .single();
 
-    if (proposalError) {
-      toast.error("Erro ao criar proposta");
-      return;
+      if (error) {
+        toast.error("Erro ao atualizar proposta");
+        return;
+      }
+
+      proposalData = data;
+
+      const { error: deleteError } = await supabase
+        .from("proposal_items")
+        .delete()
+        .eq("proposal_id", id);
+
+      if (deleteError) {
+        toast.error("Erro ao atualizar itens da proposta");
+        return;
+      }
+    } else {
+      const { data, error } = await supabase
+        .from("proposals")
+        .insert([
+          {
+            client_id: selectedClient.id,
+            date: formData.date,
+            observations: formData.observations,
+            responsible: formData.responsible,
+            company_name: formData.companyConfig.name,
+            company_address: formData.companyConfig.address,
+            company_email: formData.companyConfig.email,
+            company_phone: formData.companyConfig.phone,
+            intro_text: formData.proposalTexts.introductionText,
+            objective_text: formData.proposalTexts.objectiveText,
+            services_text: formData.proposalTexts.servicesText,
+            why_text: formData.proposalTexts.whyText,
+            created_by: user?.id,
+          },
+        ])
+        .select()
+        .single();
+
+      if (error) {
+        toast.error("Erro ao criar proposta");
+        return;
+      }
+
+      proposalData = data;
     }
 
     const items = Object.entries(formData.selectedProducts)
@@ -217,13 +361,15 @@ export default function NewProposal() {
         recurrence: value.recurrence,
       }));
 
-    const { error: itemsError } = await supabase
-      .from("proposal_items")
-      .insert(items);
+    if (items.length > 0) {
+      const { error: itemsError } = await supabase
+        .from("proposal_items")
+        .insert(items);
 
-    if (itemsError) {
-      toast.error("Erro ao salvar itens da proposta");
-      return;
+      if (itemsError) {
+        toast.error("Erro ao salvar itens da proposta");
+        return;
+      }
     }
 
     const pdfData = {
@@ -243,7 +389,11 @@ export default function NewProposal() {
     };
 
     generateProposalPDF(pdfData);
-    toast.success(`Proposta ${proposalData.proposal_number} criada com sucesso!`);
+    toast.success(
+      isEditing
+        ? `Proposta ${proposalData.proposal_number} atualizada com sucesso!`
+        : `Proposta ${proposalData.proposal_number} criada com sucesso!`
+    );
     navigate("/proposals");
   };
 
@@ -254,14 +404,21 @@ export default function NewProposal() {
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div>
-          <h1 className="text-3xl font-bold">Nova Proposta</h1>
+          <h1 className="text-3xl font-bold">
+            {isEditing ? "Editar Proposta" : "Nova Proposta"}
+          </h1>
           <p className="text-muted-foreground">
-            Crie uma nova proposta comercial
+            {isEditing
+              ? "Atualize as informações da proposta"
+              : "Crie uma nova proposta comercial"}
           </p>
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      {isEditing && loadingProposal ? (
+        <div className="flex justify-center py-10">Carregando proposta...</div>
+      ) : (
+        <form onSubmit={handleSubmit} className="space-y-4">
         <Card>
           <CardHeader>
             <CardTitle>Selecionar Cliente</CardTitle>
@@ -534,11 +691,16 @@ export default function NewProposal() {
               >
                 Cancelar
               </Button>
-              <Button type="submit">Gerar Proposta e PDF</Button>
+              <Button type="submit">
+                {isEditing
+                  ? "Salvar alterações e gerar PDF"
+                  : "Gerar Proposta e PDF"}
+              </Button>
             </div>
           </>
         )}
-      </form>
+        </form>
+      )}
     </div>
   );
 }

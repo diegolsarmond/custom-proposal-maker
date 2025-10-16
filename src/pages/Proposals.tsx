@@ -12,7 +12,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { toast } from "sonner";
-import { Plus, FileText, Trash2, ExternalLink } from "lucide-react";
+import { Plus, FileText, Trash2, ExternalLink, Pencil } from "lucide-react";
 import { generateProposalPDF } from "@/utils/pdfGenerator";
 
 interface Proposal {
@@ -205,6 +205,13 @@ export default function Proposals() {
                   <TableCell>{proposal.responsible}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => navigate(`/proposals/${proposal.id}/edit`)}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
                       <Button
                         variant="ghost"
                         size="icon"

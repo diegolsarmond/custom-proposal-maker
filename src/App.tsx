@@ -86,6 +86,16 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/proposals/:id/edit"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <NewProposal />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>
