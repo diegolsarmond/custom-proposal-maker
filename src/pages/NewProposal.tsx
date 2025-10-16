@@ -48,7 +48,7 @@ export default function NewProposal() {
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split("T")[0],
     observations: "",
-    responsible: "Rafael Alves",
+    responsible: "",
     companyConfig: {
       name: "Quantum Soluções",
       address: "Rua Antônio de Albuquerque, 330 - Sala 901, BH/MG",
@@ -80,6 +80,25 @@ export default function NewProposal() {
     fetchClients();
     fetchProducts();
   }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    const metadataName =
+      (user.user_metadata?.full_name || user.user_metadata?.name || "").trim();
+    if (!metadataName) return;
+    const parts = metadataName.split(" ").filter(Boolean);
+    if (parts.length === 0) return;
+    const firstName = parts[0];
+    const lastName = parts.length > 1 ? parts[parts.length - 1] : "";
+    const formattedName = lastName ? `${firstName} ${lastName}` : firstName;
+    setFormData((prev) => {
+      if (prev.responsible === formattedName) return prev;
+      return {
+        ...prev,
+        responsible: formattedName,
+      };
+    });
+  }, [user]);
 
   const fetchClients = async () => {
     const { data } = await supabase
