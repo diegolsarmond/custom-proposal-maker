@@ -401,6 +401,86 @@ export default function NewProposal() {
 
             <Card>
               <CardHeader className="pb-3">
+                <CardTitle className="text-lg">Textos da Proposta</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="grid lg:grid-cols-2 gap-3">
+                  <div>
+                    <Label htmlFor="introText">Texto de Introdução</Label>
+                    <Textarea
+                      id="introText"
+                      value={formData.proposalTexts.introductionText}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          proposalTexts: {
+                            ...formData.proposalTexts,
+                            introductionText: e.target.value,
+                          },
+                        })
+                      }
+                      rows={3}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="objectiveText">Texto do Objetivo</Label>
+                    <Textarea
+                      id="objectiveText"
+                      value={formData.proposalTexts.objectiveText}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          proposalTexts: {
+                            ...formData.proposalTexts,
+                            objectiveText: e.target.value,
+                          },
+                        })
+                      }
+                      rows={3}
+                    />
+                  </div>
+                </div>
+                <div className="grid lg:grid-cols-2 gap-3">
+                  <div>
+                    <Label htmlFor="servicesText">Serviços Atribuídos</Label>
+                    <Textarea
+                      id="servicesText"
+                      value={formData.proposalTexts.servicesText}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          proposalTexts: {
+                            ...formData.proposalTexts,
+                            servicesText: e.target.value,
+                          },
+                        })
+                      }
+                      rows={3}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="whyText">Por que contratar?</Label>
+                    <Textarea
+                      id="whyText"
+                      value={formData.proposalTexts.whyText}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          proposalTexts: {
+                            ...formData.proposalTexts,
+                            whyText: e.target.value,
+                          },
+                        })
+                      }
+                      rows={3}
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-3">
                 <CardTitle className="text-lg">Observações</CardTitle>
               </CardHeader>
               <CardContent>
