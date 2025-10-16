@@ -215,6 +215,7 @@ export default function NewProposal() {
       phone: selectedClient.phone || "",
       date: formData.date,
       segment: selectedClient.segment || "",
+      proposalNumber: proposalData.proposal_number,
       selectedAutomations: formData.selectedProducts,
       observations: formData.observations,
       responsible: formData.responsible,
@@ -223,7 +224,7 @@ export default function NewProposal() {
     };
 
     generateProposalPDF(pdfData);
-    toast.success("Proposta criada com sucesso!");
+    toast.success(`Proposta ${proposalData.proposal_number} criada com sucesso!`);
     navigate("/proposals");
   };
 
