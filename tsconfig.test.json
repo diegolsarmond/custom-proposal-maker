@@ -15,6 +15,7 @@
       "@/utils/pdfGenerator": ["./src/test-stubs/pdfGenerator.ts"],
       "@/components/*": ["./src/test-stubs/components/*"],
       "@/utils/formatProposalNumber": ["./src/utils/formatProposalNumber.ts"],
+      "@/utils/resolveProposalNumber": ["./src/utils/resolveProposalNumber.ts"],
       "@/*": ["./src/*"]
     },
     "lib": ["ES2020", "DOM"],
@@ -26,6 +27,8 @@
     "src/integrations/supabase/legacySession.test.ts",
     "src/utils/formatProposalNumber.ts",
     "src/utils/formatProposalNumber.test.ts",
+    "src/utils/resolveProposalNumber.ts",
+    "src/utils/resolveProposalNumber.test.ts",
     "src/utils/proposalFileName.ts",
     "src/utils/proposalFileName.test.ts",
     "src/pages/NewProposal.tsx",
