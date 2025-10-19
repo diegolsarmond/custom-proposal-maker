@@ -14,6 +14,7 @@
       "@/hooks/useAuth": ["./src/test-stubs/useAuth.ts"],
       "@/utils/pdfGenerator": ["./src/test-stubs/pdfGenerator.ts"],
       "@/components/*": ["./src/test-stubs/components/*"],
+      "@/assets/quantum-logo.png": ["./src/test-stubs/assets/quantum-logo.png.ts"],
       "@/utils/formatProposalNumber": ["./src/utils/formatProposalNumber.ts"],
       "@/utils/resolveProposalNumber": ["./src/utils/resolveProposalNumber.ts"],
       "@/*": ["./src/*"]
@@ -31,6 +32,8 @@
     "src/utils/resolveProposalNumber.test.ts",
     "src/utils/proposalFileName.ts",
     "src/utils/proposalFileName.test.ts",
+    "src/utils/pdfGenerator.ts",
+    "src/utils/pdfGeneratorFooter.test.ts",
     "src/pages/NewProposal.tsx",
     "src/pages/__tests__/NewProposal.test.tsx",
     "src/test-stubs/**/*.ts",

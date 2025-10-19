@@ -11,10 +11,16 @@ const aliasMap = new Map([
   ["components/ui/card", "dist-tests/src/test-stubs/components/ui/card.js"],
   ["components/ui/select", "dist-tests/src/test-stubs/components/ui/select.js"],
   ["utils/formatProposalNumber", "dist-tests/src/utils/formatProposalNumber.js"],
+  ["components/ProposalForm", "dist-tests/src/test-stubs/components/ProposalForm.js"],
+  ["assets/quantum-logo.png", "dist-tests/src/test-stubs/assets/quantum-logo.png.js"],
   ["utils/resolveProposalNumber", "dist-tests/src/utils/resolveProposalNumber.js"],
 ]);
 
 export async function resolve(specifier, context, defaultResolve) {
+  if (specifier === "./proposalFileName") {
+    const targetUrl = new URL("dist-tests/src/utils/proposalFileName.js", projectRoot);
+    return { url: targetUrl.href, shortCircuit: true };
+  }
   if (specifier.startsWith("@/")) {
     const target = specifier.slice(2);
     const mapped = aliasMap.get(target);
