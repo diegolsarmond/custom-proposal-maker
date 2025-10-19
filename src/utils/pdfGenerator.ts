@@ -69,32 +69,62 @@ export const generateProposalPDF = async (
   };
 
   const drawFooter = () => {
-    const footerY = 270;
+    // Ajustes feitos aqui:
+    // - footerY mais acima para evitar corte
+    // - alinhamento do texto próximo ao respectivo ícone
+    // - splitTextToSize com larguras maiores para evitar quebras desnecessárias
+    const footerY = 262; // antes: 270
     const iconSize = 5;
+    const phoneIconX = 15;
+    const locationIconX = 40;
+    const globeIconX = 72;
+
+    const phoneTextX = phoneIconX + iconSize + 1; // 21
+    const addressTextX = locationIconX + iconSize + 3; // 48
+    const websiteTextX = globeIconX + iconSize + 8; // 80
+
     doc.setDrawColor(accent[0], accent[1], accent[2]);
     doc.setLineWidth(0.4);
     doc.line(10, footerY, 200, footerY);
 
-    doc.addImage(phoneIcon, "PNG", 15, footerY + 6, iconSize, iconSize);
+    // Phone
+    try {
+      doc.addImage(phoneIcon, "PNG", phoneIconX, footerY + 6, iconSize, iconSize);
+    } catch (e) {
+      // Se ícone não carregar, não quebra o PDF
+      /* no-op */
+    }
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
     doc.setTextColor(text[0], text[1], text[2]);
     const phoneText = data.companyConfig.phone || "(31) 99305-4200";
-    const baseTextY = footerY + 11;
-    doc.text(phoneText, 21, baseTextY);
+    const baseTextY = footerY + 9; // linha base para o primeiro texto
+    doc.text(phoneText, phoneTextX, baseTextY);
 
-    doc.addImage(locationIcon, "PNG", 40, footerY + 6, iconSize, iconSize);
+    // Address (próximo ao ícone)
+    try {
+      doc.addImage(locationIcon, "PNG", locationIconX, footerY + 6, iconSize, iconSize);
+    } catch (e) {
+      /* no-op */
+    }
     const addressText = data.companyConfig.address || "Rua Antônio de Albuquerque, 330 - Sala 901, BH/MG";
-    const addressLines = doc.splitTextToSize(addressText, 26);
+    // aumenta width para evitar quebras exageradas (anterior 26)
+    const addressLines = doc.splitTextToSize(addressText, 70);
     addressLines.forEach((line, index) => {
-      doc.text(line, 146, baseTextY + index * 4.5);
+      doc.text(line, addressTextX, baseTextY + index * 5);
     });
 
-    doc.addImage(globeIcon, "PNG", 72, footerY + 6, iconSize, iconSize);
+    // Website (próximo ao ícone)
+    try {
+      doc.addImage(globeIcon, "PNG", globeIconX, footerY + 6, iconSize, iconSize);
+    } catch (e) {
+      /* no-op */
+    }
     const websiteText = (data.companyConfig as any).website || "www.quantumtecnologia.com.br";
-    const websiteLines = doc.splitTextToSize(websiteText, 28);
+    // aumenta width para evitar quebras exageradas (anterior 28)
+    const websiteLines = doc.splitTextToSize(websiteText, 40);
     websiteLines.forEach((line, index) => {
-      doc.text(line, 178, baseTextY + index * 4.5);
+      doc.text(line, websiteTextX, baseTextY + index * 5);
     });
   };
 
@@ -377,8 +407,6 @@ export const generateProposalPDF = async (
     const observationText = doc.splitTextToSize(data.observations, 180);
     doc.text(observationText, 20, y);
   }
-
-  
 
   drawFooter();
 
