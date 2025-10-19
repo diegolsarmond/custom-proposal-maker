@@ -14,6 +14,9 @@ const aliasMap = new Map([
   ["jspdf", "dist-tests/src/test-stubs/jspdf.js"],
   ["jspdf-autotable", "dist-tests/src/test-stubs/jspdf-autotable.js"],
   ["utils/formatProposalNumber", "dist-tests/src/utils/formatProposalNumber.js"],
+  ["components/ProposalForm", "dist-tests/src/test-stubs/components/ProposalForm.js"],
+  ["assets/quantum-logo.png", "dist-tests/src/test-stubs/assets/quantum-logo.png.js"],
+  ["utils/resolveProposalNumber", "dist-tests/src/utils/resolveProposalNumber.js"],
 ]);
 
 export async function resolve(specifier, context, defaultResolve) {

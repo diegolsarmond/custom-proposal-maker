@@ -15,7 +15,9 @@
       "@/utils/pdfGenerator": ["./src/test-stubs/pdfGenerator.ts"],
       "@/assets/*": ["./src/test-stubs/assets/*"],
       "@/components/*": ["./src/test-stubs/components/*"],
+      "@/assets/quantum-logo.png": ["./src/test-stubs/assets/quantum-logo.png.ts"],
       "@/utils/formatProposalNumber": ["./src/utils/formatProposalNumber.ts"],
+      "@/utils/resolveProposalNumber": ["./src/utils/resolveProposalNumber.ts"],
       "@/*": ["./src/*"]
     },
     "lib": ["ES2020", "DOM"],
@@ -31,6 +33,8 @@
     "src/utils/pdfGeneratorHeader.test.ts",
     "src/utils/proposalFileName.ts",
     "src/utils/proposalFileName.test.ts",
+    "src/utils/pdfGenerator.ts",
+    "src/utils/pdfGeneratorFooter.test.ts",
     "src/pages/NewProposal.tsx",
     "src/pages/__tests__/NewProposal.test.tsx",
     "src/test-stubs/**/*.ts",

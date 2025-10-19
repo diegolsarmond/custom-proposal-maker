@@ -27,6 +27,7 @@ import "./SendEmail.css";
 import { Send, Paperclip, X, Mail, History } from "lucide-react";
 import { generateProposalPDF } from "@/utils/pdfGenerator";
 import { formatProposalPdfFileName } from "@/utils/proposalFileName";
+import { resolveProposalNumber } from "@/utils/resolveProposalNumber";
 
 interface Profile {
   id: string;
@@ -44,6 +45,7 @@ interface ProposalOption {
   id: string;
   date: string;
   proposal_number?: string | null;
+  proposals_number?: { id?: number | null } | { id?: number | null }[] | null;
   clients: {
     name: string;
     company_name: string;
@@ -143,7 +145,9 @@ export default function SendEmail() {
       .select(`
         id,
         date,
-        proposal_number,
+        proposals_number (
+          id
+        ),
         clients (
           name,
           company_name
@@ -155,7 +159,11 @@ export default function SendEmail() {
     if (error) {
       toast.error("Erro ao carregar propostas");
     } else {
-      setProposals(data || []);
+      const normalized = (data || []).map((proposal: any) => ({
+        ...proposal,
+        proposal_number: resolveProposalNumber(proposal),
+      }));
+      setProposals(normalized as ProposalOption[]);
     }
     setLoadingProposals(false);
   };
@@ -219,6 +227,9 @@ export default function SendEmail() {
         .from("proposals")
         .select(`
           *,
+          proposals_number (
+            id
+          ),
           clients (
             name,
             company_name,
@@ -234,6 +245,8 @@ export default function SendEmail() {
       if (proposalError || !proposalData) {
         throw new Error("Erro ao carregar dados da proposta");
       }
+
+      const proposalNumber = resolveProposalNumber(proposalData as any) || "";
 
       const { data: items, error: itemsError } = await supabase
         .from("proposal_items")
@@ -273,7 +286,7 @@ export default function SendEmail() {
         phone: clientInfo?.phone || "",
         date: proposalData.date,
         segment: clientInfo?.segment || "",
-        proposalNumber: (proposalData as any).proposal_number || "",
+        proposalNumber,
         proposalId: String(proposalData.id),
         selectedAutomations,
         observations: proposalData.observations || "",

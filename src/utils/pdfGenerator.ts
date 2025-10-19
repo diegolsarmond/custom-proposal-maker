@@ -83,18 +83,18 @@ export const generateProposalPDF = async (
     const baseTextY = footerY + 11;
     doc.text(phoneText, 21, baseTextY);
 
-    doc.addImage(locationIcon, "PNG", 80, footerY + 6, iconSize, iconSize);
+    doc.addImage(locationIcon, "PNG", 140, footerY + 6, iconSize, iconSize);
     const addressText = data.companyConfig.address || "Rua Antônio de Albuquerque, 330 - Sala 901, BH/MG";
-    const addressLines = doc.splitTextToSize(addressText, 70);
+    const addressLines = doc.splitTextToSize(addressText, 55);
     addressLines.forEach((line, index) => {
-      doc.text(line, 86, baseTextY + index * 4.5);
+      doc.text(line, 146, baseTextY + index * 4.5);
     });
 
-    doc.addImage(globeIcon, "PNG", 155, footerY + 6, iconSize, iconSize);
+    doc.addImage(globeIcon, "PNG", 172, footerY + 6, iconSize, iconSize);
     const websiteText = (data.companyConfig as any).website || "www.quantumtecnologia.com.br";
-    const websiteLines = doc.splitTextToSize(websiteText, 40);
+    const websiteLines = doc.splitTextToSize(websiteText, 28);
     websiteLines.forEach((line, index) => {
-      doc.text(line, 161, baseTextY + index * 4.5);
+      doc.text(line, 178, baseTextY + index * 4.5);
     });
   };
 
