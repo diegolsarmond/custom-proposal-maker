@@ -33,6 +33,20 @@ const parseJsonBody = async (req: IncomingMessage): Promise<unknown> => {
   return JSON.parse(raw);
 };
 
+export const normalizePath = (url?: string | null) => {
+  if (!url) {
+    return '';
+  }
+  const [path] = url.split('?');
+  if (!path) {
+    return '';
+  }
+  if (path === '/') {
+    return path;
+  }
+  return path.replace(/\/+$/, '');
+};
+
 const server = createServer(async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', corsHeaders['Access-Control-Allow-Origin']);
   res.setHeader('Access-Control-Allow-Headers', corsHeaders['Access-Control-Allow-Headers']);
@@ -43,7 +57,9 @@ const server = createServer(async (req, res) => {
     return;
   }
 
-  if (req.method === 'POST' && req.url === '/emails/send') {
+  const path = normalizePath(req.url);
+
+  if (req.method === 'POST' && path === '/emails/send') {
     try {
       const body = (await parseJsonBody(req)) as SendEmailRequest;
       const result = await sendEmailHandler(body, req.headers);
