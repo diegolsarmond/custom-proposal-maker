@@ -12,6 +12,8 @@
     "src/integrations/supabase/legacySession.ts",
     "src/integrations/supabase/legacySession.test.ts",
     "src/utils/proposalFileName.ts",
-    "src/utils/proposalFileName.test.ts"
+    "src/utils/proposalFileName.test.ts",
+    "backend/src/**/*.ts",
+    "backend/tests/**/*.ts"
   ]
 }
