@@ -10,6 +10,8 @@
   },
   "include": [
     "src/integrations/supabase/legacySession.ts",
-    "src/integrations/supabase/legacySession.test.ts"
+    "src/integrations/supabase/legacySession.test.ts",
+    "src/utils/proposalFileName.ts",
+    "src/utils/proposalFileName.test.ts"
   ]
 }

@@ -25,6 +25,8 @@ import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 import "./SendEmail.css";
 import { Send, Paperclip, X, Mail, History } from "lucide-react";
+import { generateProposalPDF } from "@/utils/pdfGenerator";
+import { formatProposalPdfFileName } from "@/utils/proposalFileName";
 
 interface Profile {
   id: string;
@@ -32,10 +34,40 @@ interface Profile {
   full_name: string;
 }
 
+interface Client {
+  id: string;
+  name: string;
+  email: string | null;
+}
+
+interface ProposalOption {
+  id: string;
+  date: string;
+  proposal_number?: string | null;
+  clients: {
+    name: string;
+    company_name: string;
+  } | null;
+}
+
 interface Attachment {
   file: File;
   base64: string;
 }
+
+const convertFileToBase64 = (file: File) =>
+  new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result as string;
+      const base64 = result.includes(",") ? result.split(",")[1] : result;
+      resolve(base64);
+    };
+    reader.onerror = () => {
+      reject(new Error("Erro ao processar arquivo"));
+    };
+    reader.readAsDataURL(file);
+  });
 
 interface SentEmail {
   id: string;
@@ -56,7 +88,13 @@ export default function SendEmail() {
   const [sending, setSending] = useState(false);
   const [sentEmails, setSentEmails] = useState<SentEmail[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
-  
+
+  const [clients, setClients] = useState<Client[]>([]);
+  const [proposals, setProposals] = useState<ProposalOption[]>([]);
+  const [loadingProposals, setLoadingProposals] = useState(false);
+  const [selectedProposalId, setSelectedProposalId] = useState("");
+  const [attachingProposal, setAttachingProposal] = useState(false);
+
   const [fromEmail, setFromEmail] = useState("");
   const [toEmail, setToEmail] = useState("");
   const [subject, setSubject] = useState("");
@@ -66,6 +104,8 @@ export default function SendEmail() {
   useEffect(() => {
     fetchUsers();
     fetchSentEmails();
+    fetchClients();
+    fetchProposals();
   }, []);
 
   const fetchUsers = async () => {
@@ -81,6 +121,43 @@ export default function SendEmail() {
       setUsers(data || []);
     }
     setLoading(false);
+  };
+
+  const fetchClients = async () => {
+    const { data, error } = await supabase
+      .from("clients")
+      .select("id, name, email")
+      .order("name", { ascending: true });
+
+    if (error) {
+      toast.error("Erro ao carregar clientes");
+    } else {
+      setClients(data || []);
+    }
+  };
+
+  const fetchProposals = async () => {
+    setLoadingProposals(true);
+    const { data, error } = await supabase
+      .from("proposals")
+      .select(`
+        id,
+        date,
+        proposal_number,
+        clients (
+          name,
+          company_name
+        )
+      `)
+      .order("date", { ascending: false })
+      .limit(100);
+
+    if (error) {
+      toast.error("Erro ao carregar propostas");
+    } else {
+      setProposals(data || []);
+    }
+    setLoadingProposals(false);
   };
 
   const fetchSentEmails = async () => {
@@ -108,25 +185,20 @@ export default function SendEmail() {
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
-      
+
       // Limita tamanho a 5MB
       if (file.size > 5 * 1024 * 1024) {
         toast.error(`Arquivo ${file.name} muito grande (máx 5MB)`);
         continue;
       }
 
-      // Converte para base64
-      const reader = new FileReader();
-      const base64Promise = new Promise<string>((resolve) => {
-        reader.onload = () => {
-          const base64 = (reader.result as string).split(",")[1];
-          resolve(base64);
-        };
-        reader.readAsDataURL(file);
-      });
-
-      const base64 = await base64Promise;
-      newAttachments.push({ file, base64 });
+      try {
+        const base64 = await convertFileToBase64(file);
+        newAttachments.push({ file, base64 });
+      } catch (error) {
+        console.error("Erro ao processar arquivo:", error);
+        toast.error(`Não foi possível adicionar ${file.name}`);
+      }
     }
 
     setAttachments([...attachments, ...newAttachments]);
@@ -135,6 +207,118 @@ export default function SendEmail() {
 
   const removeAttachment = (index: number) => {
     setAttachments(attachments.filter((_, i) => i !== index));
+  };
+
+  const handleAttachProposal = async () => {
+    if (!selectedProposalId) return;
+
+    setAttachingProposal(true);
+
+    try {
+      const { data: proposalData, error: proposalError } = await supabase
+        .from("proposals")
+        .select(`
+          *,
+          clients (
+            name,
+            company_name,
+            document,
+            email,
+            phone,
+            segment
+          )
+        `)
+        .eq("id", selectedProposalId)
+        .single();
+
+      if (proposalError || !proposalData) {
+        throw new Error("Erro ao carregar dados da proposta");
+      }
+
+      const { data: items, error: itemsError } = await supabase
+        .from("proposal_items")
+        .select(`
+          *,
+          products (
+            id,
+            name,
+            description
+          )
+        `)
+        .eq("proposal_id", selectedProposalId);
+
+      if (itemsError) {
+        throw new Error("Erro ao carregar itens da proposta");
+      }
+
+      const selectedAutomations: Record<string, any> = {};
+      (items || []).forEach((item: any) => {
+        const product = item.products;
+        if (!product) return;
+        selectedAutomations[product.id] = {
+          selected: true,
+          implantation: Number(item.implantation),
+          recurrence: Number(item.recurrence),
+          name: product.name,
+          description: product.description,
+        };
+      });
+
+      const clientInfo = proposalData.clients;
+      const pdfData = {
+        clientName: clientInfo?.name || "",
+        companyName: clientInfo?.company_name || "",
+        document: clientInfo?.document || "",
+        email: clientInfo?.email || "",
+        phone: clientInfo?.phone || "",
+        date: proposalData.date,
+        segment: clientInfo?.segment || "",
+        proposalNumber: (proposalData as any).proposal_number || "",
+        proposalId: String(proposalData.id),
+        selectedAutomations,
+        observations: proposalData.observations || "",
+        responsible: proposalData.responsible,
+        companyConfig: {
+          name: proposalData.company_name,
+          address: proposalData.company_address,
+          email: proposalData.company_email,
+          phone: proposalData.company_phone,
+        },
+        proposalTexts: {
+          introductionText: proposalData.intro_text,
+          objectiveText: proposalData.objective_text,
+          servicesText: proposalData.services_text,
+          whyText: proposalData.why_text,
+        },
+        pricingLabels: {
+          implantation: "Implantação (R$)",
+          recurrence: "Recorrência",
+        },
+      };
+
+      const blob = (await generateProposalPDF(pdfData, { returnData: "blob" })) as Blob;
+      const clientName = clientInfo?.name || "Cliente";
+      const fileName = formatProposalPdfFileName(clientName, proposalData.date);
+      const pdfFile = new File([blob], fileName, { type: "application/pdf" });
+      const base64 = await convertFileToBase64(pdfFile);
+
+      const alreadyAttached = attachments.some(
+        (att) => att.file.name === pdfFile.name && att.file.size === pdfFile.size
+      );
+
+      if (alreadyAttached) {
+        toast.error("Esta proposta já foi anexada");
+      } else {
+        setAttachments([...attachments, { file: pdfFile, base64 }]);
+        toast.success("Proposta anexada com sucesso");
+        setSelectedProposalId("");
+      }
+    } catch (error: any) {
+      console.error("Erro ao anexar proposta:", error);
+      toast.error(error.message || "Erro ao anexar proposta");
+    } finally {
+      setAttachingProposal(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -249,8 +433,20 @@ export default function SendEmail() {
             placeholder="destinatario@exemplo.com"
             value={toEmail}
             onChange={(e) => setToEmail(e.target.value)}
+            list="client-email-list"
             required
           />
+          <datalist id="client-email-list">
+            {clients
+              .filter((client) => !!client.email)
+              .map((client) => (
+                <option
+                  key={client.id}
+                  value={client.email as string}
+                  label={`${client.name} (${client.email})`}
+                />
+              ))}
+          </datalist>
         </div>
 
         <div className="space-y-2">
@@ -278,48 +474,98 @@ export default function SendEmail() {
           </div>
         </div>
 
-        <div className="space-y-2">
-          <Label>Anexos (máx 5MB por arquivo)</Label>
-          <div className="flex items-center gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => document.getElementById("file-upload")?.click()}
-            >
-              <Paperclip className="w-4 h-4 mr-2" />
-              Adicionar Anexo
-            </Button>
-            <input
-              id="file-upload"
-              type="file"
-              multiple
-              className="hidden"
-              onChange={handleFileChange}
-            />
-          </div>
-          
-          {attachments.length > 0 && (
-            <div className="space-y-2 mt-2">
-              {attachments.map((att, index) => (
-                <div
-                  key={index}
-                  className="flex items-center justify-between bg-muted p-2 rounded"
-                >
-                  <span className="text-sm truncate flex-1">
-                    {att.file.name} ({(att.file.size / 1024).toFixed(1)} KB)
-                  </span>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => removeAttachment(index)}
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
-                </div>
-              ))}
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="proposal-attachment">Anexar proposta comercial (opcional)</Label>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Select
+                value={selectedProposalId}
+                onValueChange={setSelectedProposalId}
+                disabled={loadingProposals || attachingProposal}
+              >
+                <SelectTrigger id="proposal-attachment">
+                  <SelectValue placeholder={loadingProposals ? "Carregando..." : "Selecione uma proposta"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {loadingProposals ? (
+                    <SelectItem value="carregando" disabled>
+                      Carregando...
+                    </SelectItem>
+                  ) : proposals.length === 0 ? (
+                    <SelectItem value="sem-propostas" disabled>
+                      Nenhuma proposta disponível
+                    </SelectItem>
+                  ) : (
+                    proposals.map((proposal) => {
+                      const number = proposal.proposal_number || "Sem número";
+                      const clientName = proposal.clients?.name || "Cliente";
+                      const companyName = proposal.clients?.company_name
+                        ? ` - ${proposal.clients.company_name}`
+                        : "";
+                      const dateLabel = new Date(proposal.date).toLocaleDateString("pt-BR");
+                      return (
+                        <SelectItem key={proposal.id} value={proposal.id}>
+                          {`${number} • ${clientName}${companyName} • ${dateLabel}`}
+                        </SelectItem>
+                      );
+                    })
+                  )}
+                </SelectContent>
+              </Select>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleAttachProposal}
+                disabled={!selectedProposalId || attachingProposal}
+              >
+                {attachingProposal ? "Anexando..." : "Anexar Proposta"}
+              </Button>
             </div>
-          )}
+          </div>
+
+          <div className="space-y-2">
+            <Label>Anexos (máx 5MB por arquivo)</Label>
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => document.getElementById("file-upload")?.click()}
+              >
+                <Paperclip className="w-4 h-4 mr-2" />
+                Adicionar Anexo
+              </Button>
+              <input
+                id="file-upload"
+                type="file"
+                multiple
+                className="hidden"
+                onChange={handleFileChange}
+              />
+            </div>
+
+            {attachments.length > 0 && (
+              <div className="space-y-2 mt-2">
+                {attachments.map((att, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center justify-between bg-muted p-2 rounded"
+                  >
+                    <span className="text-sm truncate flex-1">
+                      {att.file.name} ({(att.file.size / 1024).toFixed(1)} KB)
+                    </span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeAttachment(index)}
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="flex justify-end gap-2 pt-4">
