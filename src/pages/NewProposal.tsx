@@ -373,7 +373,7 @@ export default function NewProposal() {
             why_text: formData.proposalTexts.whyText,
             created_by: user?.id,
           },
-        ])
+        ], { defaultToNull: false })
         .select()
         .single();
 
