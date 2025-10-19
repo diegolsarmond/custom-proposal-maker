@@ -39,8 +39,8 @@ const defaultCreateSupabaseClient = () => {
   });
 };
 
-const buildEmailPayload = (request: SendEmailRequest) => ({
-  from: `Quantum JUD <${request.from}>`,
+const buildEmailPayload = (request: SendEmailRequest, fromName: string) => ({
+  from: `${fromName} <${request.from}>`,
   to: [request.to],
   bcc: ['contato@quantumtecnologia.com.br'],
   subject: request.subject,
@@ -74,11 +74,14 @@ export const createSendEmailHandler = (
     createSupabaseClient: () => SupabaseClient;
     fetchImpl: typeof fetch;
     resendApiKey: string;
+    fromName: string;
   }> = {},
 ) => {
   const createSupabaseClient = overrides.createSupabaseClient ?? defaultCreateSupabaseClient;
   const fetchImpl = overrides.fetchImpl ?? defaultFetchImpl;
-  const resendApiKey = overrides.resendApiKey ?? process.env.RESEND_API_KEY ?? '';
+  const resendApiKey =
+    overrides.resendApiKey ?? process.env.RESEND_API_KEY ?? process.env.SMTP_PASSWORD ?? '';
+  const fromName = overrides.fromName ?? process.env.SMTP_FROM_NAME ?? 'Quantum Tecnologia';
 
   if (!resendApiKey) {
     throw new Error('RESEND_API_KEY não configurada');
@@ -110,7 +113,7 @@ export const createSendEmailHandler = (
       }
     }
 
-    const emailPayload = buildEmailPayload(body);
+    const emailPayload = buildEmailPayload(body, fromName);
 
     try {
       const response = await fetchImpl('https://api.resend.com/emails', {
