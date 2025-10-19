@@ -11,6 +11,7 @@ const aliasMap = new Map([
   ["components/ui/card", "dist-tests/src/test-stubs/components/ui/card.js"],
   ["components/ui/select", "dist-tests/src/test-stubs/components/ui/select.js"],
   ["utils/formatProposalNumber", "dist-tests/src/utils/formatProposalNumber.js"],
+  ["utils/resolveProposalNumber", "dist-tests/src/utils/resolveProposalNumber.js"],
 ]);
 
 export async function resolve(specifier, context, defaultResolve) {
