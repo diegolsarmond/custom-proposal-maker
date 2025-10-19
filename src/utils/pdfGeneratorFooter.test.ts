@@ -5,6 +5,7 @@ class FakeJsPDF {
   static instances: FakeJsPDF[] = [];
   addImageCalls: { data: any; x: number; y: number; w: number; h: number }[] = [];
   textCalls: { text: string; x: number; y: number }[] = [];
+  splitTextToSizeCalls: { text: string; size?: number }[] = [];
   lastAutoTable: { finalY: number } | null = null;
 
   constructor() {
@@ -35,7 +36,8 @@ class FakeJsPDF {
   GState(options: any) {
     return options;
   }
-  splitTextToSize(text: string) {
+  splitTextToSize(text: string, size?: number) {
+    this.splitTextToSizeCalls.push({ text, size });
     return [text];
   }
   save() {}
@@ -104,6 +106,9 @@ test("posiciona endereço alinhado ao site no rodapé", async () => {
   const addressText = instance.textCalls.find((entry) => entry.text === "Endereco Teste");
   assert.ok(addressText);
   assert.ok(addressText.x >= 146);
+  const addressSplit = instance.splitTextToSizeCalls.find((entry) => entry.text === "Endereco Teste");
+  assert.ok(addressSplit);
+  assert.equal(addressSplit.size, 26);
   const globeImage = instance.addImageCalls.find((entry) => entry.data === "data:/icons/globe.png");
   assert.ok(globeImage);
   assert.ok(globeImage.x >= 170);
