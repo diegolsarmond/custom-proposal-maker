@@ -90,7 +90,7 @@ export const generateProposalPDF = async (
 
     doc.addImage(locationIcon, "PNG", 140, footerY + 6, iconSize, iconSize);
     const addressText = data.companyConfig.address || "Rua Antônio de Albuquerque, 330 - Sala 901, BH/MG";
-    const addressLines = doc.splitTextToSize(addressText, 55);
+    const addressLines = doc.splitTextToSize(addressText, 26);
     addressLines.forEach((line, index) => {
       doc.text(line, 146, baseTextY + index * 4.5);
     });
