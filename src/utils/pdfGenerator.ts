@@ -2,6 +2,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { ProposalData } from "@/components/ProposalForm";
 import logoImage from "@/assets/quantum-logo.png";
+import { formatProposalPdfFileName } from "./proposalFileName";
 
 // ícones no /public (crie os arquivos):
 // /icons/phone.png  /icons/location.png  /icons/globe.png
@@ -29,7 +30,7 @@ const loadImageData = async (src: string) => {
 
 export const generateProposalPDF = async (
   data: ProposalData,
-  options?: { openInNewTab?: boolean }
+  options?: { openInNewTab?: boolean; returnData?: "blob" | "datauristring" }
 ) => {
   const [logoData, phoneIcon, locationIcon, globeIcon] = await Promise.all([
     loadImageData(logoImage),
@@ -388,7 +389,12 @@ export const generateProposalPDF = async (
   drawFooter();
 
   // Salvar
-  const fileName = `Proposta_${data.clientName.replace(/\s+/g, "_")}_${formattedDate.replace(/\//g, "-")}.pdf`;
+  const fileName = formatProposalPdfFileName(data.clientName, data.date);
+
+  if (options?.returnData) {
+    return doc.output(options.returnData);
+  }
+
   if (options?.openInNewTab && typeof window !== "undefined") {
     const blobUrl = doc.output("bloburl");
     window.open(blobUrl, "_blank");
