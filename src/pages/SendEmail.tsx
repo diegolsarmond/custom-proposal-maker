@@ -145,7 +145,6 @@ export default function SendEmail() {
       .select(`
         id,
         date,
-        proposal_number,
         proposals_number (
           id
         ),

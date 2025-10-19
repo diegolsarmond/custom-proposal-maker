@@ -27,6 +27,14 @@ test("aceita relação em lista", () => {
   assert.equal(result, "#0012/2025");
 });
 
+test("gera número quando campo original está ausente", () => {
+  const result = resolveProposalNumber({
+    date: baseDate,
+    proposals_number: { id: 21 },
+  } as any);
+  assert.equal(result, "#0021/2025");
+});
+
 test("retorna null sem sequência disponível", () => {
   const result = resolveProposalNumber({ proposal_number: null, date: baseDate });
   assert.equal(result, null);
