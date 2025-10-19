@@ -14,6 +14,7 @@ import {
 import { toast } from "sonner";
 import { Plus, FileText, Trash2, ExternalLink, Pencil } from "lucide-react";
 import { generateProposalPDF } from "@/utils/pdfGenerator";
+import { resolveProposalNumber } from "@/utils/resolveProposalNumber";
 
 interface Proposal {
   id: string;
@@ -23,6 +24,7 @@ interface Proposal {
   proposal_number?: string;
   sequence_number?: number;
   sequence_year?: number;
+  proposals_number?: { id?: number | null } | { id?: number | null }[] | null;
   clients: {
     name: string;
     company_name: string;
@@ -44,6 +46,9 @@ export default function Proposals() {
       .from("proposals")
       .select(`
         *,
+        proposals_number (
+          id
+        ),
         clients (
           name,
           company_name
@@ -54,7 +59,11 @@ export default function Proposals() {
     if (error) {
       toast.error("Erro ao carregar propostas");
     } else {
-      setProposals(data || []);
+      const normalized = (data || []).map((proposal: any) => ({
+        ...proposal,
+        proposal_number: resolveProposalNumber(proposal),
+      }));
+      setProposals(normalized as Proposal[]);
     }
     setLoading(false);
   };
@@ -80,6 +89,9 @@ export default function Proposals() {
       .from("proposals")
       .select(`
         *,
+        proposals_number (
+          id
+        ),
         clients (
           name,
           company_name,
@@ -92,10 +104,12 @@ export default function Proposals() {
       .eq("id", proposal.id)
       .single();
 
-    if (proposalError) {
+    if (proposalError || !proposalData) {
       toast.error("Erro ao carregar dados da proposta");
       return;
     }
+
+    const proposalNumber = resolveProposalNumber(proposalData as any) || "";
 
     const { data: items, error: itemsError } = await supabase
       .from("proposal_items")
@@ -135,7 +149,7 @@ export default function Proposals() {
       phone: proposalData.clients.phone || "",
       date: proposalData.date,
       segment: proposalData.clients.segment || "",
-      proposalNumber: (proposalData as any).proposal_number || "",
+      proposalNumber,
       proposalId: String(proposalData.id),
       selectedAutomations,
       observations: proposalData.observations || "",
