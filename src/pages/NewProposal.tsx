@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { generateProposalPDF } from "@/utils/pdfGenerator";
+import { formatProposalNumber } from "@/utils/formatProposalNumber";
 import { ArrowLeft } from "lucide-react";
 
 interface Client {
@@ -385,29 +386,54 @@ export default function NewProposal() {
     }
 
     if (!(proposalData as any)?.proposal_number) {
-      const { data: proposalNumberData } = await supabase
-        .from("proposals")
-        .select("*")
-        .eq("id", proposalData.id)
-        .single();
+      const { data: existingNumber, error: existingNumberError } = await supabase
+        .from("proposals_number")
+        .select("id")
+        .eq("proposal_id", proposalData.id)
+        .maybeSingle();
 
-      if (proposalNumberData) {
-        proposalData = {
-          ...proposalData,
-          ...(proposalNumberData as any),
-        };
+      if (existingNumberError) {
+        toast.error("Erro ao consultar número da proposta");
       }
 
-      const pdData = proposalData as any;
-      if (
-        !pdData.proposal_number &&
-        pdData.sequence_number &&
-        pdData.sequence_year
-      ) {
-        proposalData = {
-          ...proposalData,
-          proposal_number: `${String(pdData.sequence_number).padStart(3, "0")}/${pdData.sequence_year}`,
-        } as any;
+      let proposalNumberId = existingNumber?.id;
+
+      if (!proposalNumberId) {
+        const { data: insertedNumber, error: insertNumberError } = await supabase
+          .from("proposals_number")
+          .insert({ proposal_id: proposalData.id })
+          .select("id")
+          .single();
+
+        if (insertNumberError) {
+          toast.error("Erro ao gerar número da proposta");
+        } else {
+          proposalNumberId = insertedNumber.id;
+        }
+      }
+
+      if (proposalNumberId) {
+        const formattedNumber = formatProposalNumber(
+          proposalNumberId,
+          proposalData.date
+        );
+
+        const { data: updatedProposal, error: updateProposalError } =
+          await supabase
+            .from("proposals")
+            .update({ proposal_number: formattedNumber })
+            .eq("id", proposalData.id)
+            .select()
+            .single();
+
+        if (updateProposalError) {
+          proposalData = {
+            ...proposalData,
+            proposal_number: formattedNumber,
+          } as any;
+        } else if (updatedProposal) {
+          proposalData = updatedProposal;
+        }
       }
     }
 

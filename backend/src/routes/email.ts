@@ -81,7 +81,7 @@ export const createSendEmailHandler = (
   const fetchImpl = overrides.fetchImpl ?? defaultFetchImpl;
   const resendApiKey =
     overrides.resendApiKey ?? process.env.RESEND_API_KEY ?? process.env.SMTP_PASSWORD ?? '';
-  const fromName = overrides.fromName ?? process.env.SMTP_FROM_NAME ?? 'Quantum JUD';
+  const fromName = overrides.fromName ?? process.env.SMTP_FROM_NAME ?? 'Quantum Tecnologia';
 
   if (!resendApiKey) {
     throw new Error('RESEND_API_KEY não configurada');
