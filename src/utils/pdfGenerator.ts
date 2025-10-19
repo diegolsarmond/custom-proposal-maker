@@ -1,8 +1,8 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import { ProposalData } from "@/components/ProposalForm";
+import type { ProposalData } from "../components/ProposalForm";
 import logoImage from "@/assets/quantum-logo.png";
-import { formatProposalPdfFileName } from "./proposalFileName";
+import { formatProposalPdfFileName } from "./proposalFileName.js";
 
 // ícones no /public (crie os arquivos):
 // /icons/phone.png  /icons/location.png  /icons/globe.png
@@ -48,9 +48,8 @@ export const generateProposalPDF = async (
   const year = new Date(data.date).getFullYear().toString();
   const formattedDate = new Date(data.date).toLocaleDateString("pt-BR");
   const proposalIdentifier = data.proposalNumber || "";
-  const proposalInfoLine = proposalIdentifier
-    ? `${proposalIdentifier} - ${formattedDate}`
-    : formattedDate;
+  const headerProposalInfo = proposalIdentifier ? `Nº ${proposalIdentifier}` : "";
+  const proposalInfoLine = formattedDate;
 
   const drawContentHeader = () => {
     doc.setFillColor(primary[0], primary[1], primary[2]);
@@ -63,13 +62,9 @@ export const generateProposalPDF = async (
     doc.setFont("helvetica", "normal");
     doc.setFontSize(12);
     doc.text("Prestação de Serviço de Tecnologia", 15, 25);
-    if (proposalIdentifier) {
+    if (headerProposalInfo) {
       doc.setFontSize(12);
-      doc.text(`Nº ${proposalIdentifier}`, 195, 16, { align: "right" });
-    }
-    if (proposalInfoLine) {
-      doc.setFontSize(11);
-      doc.text(proposalInfoLine, 195, 25, { align: "right" });
+      doc.text(headerProposalInfo, 195, 16, { align: "right" });
     }
   };
 
@@ -391,7 +386,7 @@ export const generateProposalPDF = async (
   const fileName = formatProposalPdfFileName(data.clientName, data.date);
 
   if (options?.returnData) {
-    return doc.output(options.returnData);
+    return doc.output(options.returnData as any);
   }
 
   if (options?.openInNewTab && typeof window !== "undefined") {

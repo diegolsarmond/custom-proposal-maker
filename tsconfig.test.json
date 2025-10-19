@@ -13,6 +13,7 @@
       "@/integrations/supabase/client": ["./src/test-stubs/supabaseClient.ts"],
       "@/hooks/useAuth": ["./src/test-stubs/useAuth.ts"],
       "@/utils/pdfGenerator": ["./src/test-stubs/pdfGenerator.ts"],
+      "@/assets/*": ["./src/test-stubs/assets/*"],
       "@/components/*": ["./src/test-stubs/components/*"],
       "@/utils/formatProposalNumber": ["./src/utils/formatProposalNumber.ts"],
       "@/*": ["./src/*"]
@@ -26,11 +27,14 @@
     "src/integrations/supabase/legacySession.test.ts",
     "src/utils/formatProposalNumber.ts",
     "src/utils/formatProposalNumber.test.ts",
+    "src/utils/pdfGenerator.ts",
+    "src/utils/pdfGeneratorHeader.test.ts",
     "src/utils/proposalFileName.ts",
     "src/utils/proposalFileName.test.ts",
     "src/pages/NewProposal.tsx",
     "src/pages/__tests__/NewProposal.test.tsx",
     "src/test-stubs/**/*.ts",
+    "src/types/**/*.d.ts",
     "backend/src/**/*.ts",
     "backend/tests/**/*.ts"
   ]

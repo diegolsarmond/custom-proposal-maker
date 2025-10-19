@@ -10,10 +10,18 @@ const aliasMap = new Map([
   ["components/ui/textarea", "dist-tests/src/test-stubs/components/ui/textarea.js"],
   ["components/ui/card", "dist-tests/src/test-stubs/components/ui/card.js"],
   ["components/ui/select", "dist-tests/src/test-stubs/components/ui/select.js"],
+  ["assets/quantum-logo.png", "dist-tests/src/test-stubs/assets/quantum-logo.png.js"],
+  ["jspdf", "dist-tests/src/test-stubs/jspdf.js"],
+  ["jspdf-autotable", "dist-tests/src/test-stubs/jspdf-autotable.js"],
   ["utils/formatProposalNumber", "dist-tests/src/utils/formatProposalNumber.js"],
 ]);
 
 export async function resolve(specifier, context, defaultResolve) {
+  const mappedSpecifier = aliasMap.get(specifier);
+  if (mappedSpecifier) {
+    const targetUrl = new URL(mappedSpecifier, projectRoot);
+    return { url: targetUrl.href, shortCircuit: true };
+  }
   if (specifier.startsWith("@/")) {
     const target = specifier.slice(2);
     const mapped = aliasMap.get(target);
