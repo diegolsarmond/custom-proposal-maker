@@ -83,14 +83,14 @@ export const generateProposalPDF = async (
     const baseTextY = footerY + 11;
     doc.text(phoneText, 21, baseTextY);
 
-    doc.addImage(locationIcon, "PNG", 140, footerY + 6, iconSize, iconSize);
+    doc.addImage(locationIcon, "PNG", 40, footerY + 6, iconSize, iconSize);
     const addressText = data.companyConfig.address || "Rua Antônio de Albuquerque, 330 - Sala 901, BH/MG";
     const addressLines = doc.splitTextToSize(addressText, 26);
     addressLines.forEach((line, index) => {
       doc.text(line, 146, baseTextY + index * 4.5);
     });
 
-    doc.addImage(globeIcon, "PNG", 172, footerY + 6, iconSize, iconSize);
+    doc.addImage(globeIcon, "PNG", 72, footerY + 6, iconSize, iconSize);
     const websiteText = (data.companyConfig as any).website || "www.quantumtecnologia.com.br";
     const websiteLines = doc.splitTextToSize(websiteText, 28);
     websiteLines.forEach((line, index) => {
