@@ -13,6 +13,7 @@ import Products from "./pages/Products";
 import Users from "./pages/Users";
 import Proposals from "./pages/Proposals";
 import NewProposal from "./pages/NewProposal";
+import SendEmail from "./pages/SendEmail";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -92,6 +93,16 @@ const App = () => (
                 <ProtectedRoute>
                   <Layout>
                     <NewProposal />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/send-email"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <SendEmail />
                   </Layout>
                 </ProtectedRoute>
               }
