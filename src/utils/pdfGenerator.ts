@@ -47,8 +47,7 @@ export const generateProposalPDF = async (
   const light: [number, number, number] = [243, 244, 246];
   const year = new Date(data.date).getFullYear().toString();
   const formattedDate = new Date(data.date).toLocaleDateString("pt-BR");
-  const proposalIdentifier =
-    data.proposalNumber || (data.proposalId ? `${data.proposalId}/${year}` : "");
+  const proposalIdentifier = data.proposalNumber || "";
   const proposalInfoLine = proposalIdentifier
     ? `${proposalIdentifier} - ${formattedDate}`
     : formattedDate;
@@ -164,7 +163,7 @@ export const generateProposalPDF = async (
   }
 
   // Logo no topo direito
-  doc.addImage(logoData, "PNG", 92, 88, 46, 46);
+  doc.addImage(logoData, "PNG", 92, 82, 46, 46);
 
   // Rodapé da capa
   doc.setFont("helvetica", "normal");

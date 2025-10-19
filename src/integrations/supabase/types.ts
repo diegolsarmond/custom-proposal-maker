@@ -182,6 +182,7 @@ export type Database = {
           intro_text: string
           objective_text: string
           observations: string | null
+          proposal_number: string | null
           responsible: string
           services_text: string
           updated_at: string
@@ -200,6 +201,7 @@ export type Database = {
           intro_text: string
           objective_text: string
           observations?: string | null
+          proposal_number?: string | null
           responsible: string
           services_text: string
           updated_at?: string
@@ -218,6 +220,7 @@ export type Database = {
           intro_text?: string
           objective_text?: string
           observations?: string | null
+          proposal_number?: string | null
           responsible?: string
           services_text?: string
           updated_at?: string
@@ -236,6 +239,32 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      proposals_number: {
+        Row: {
+          created_at: string
+          id: number
+          proposal_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          proposal_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          proposal_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "proposals_number_proposal_id_fkey"
+            columns: ["proposal_id"]
+            isOneToOne: true
+            referencedRelation: "proposals"
             referencedColumns: ["id"]
           },
         ]
