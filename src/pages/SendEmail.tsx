@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, type ComponentType } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -21,8 +22,6 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import ReactQuill from "react-quill";
-import "react-quill/dist/quill.snow.css";
 import "./SendEmail.css";
 import { Send, Paperclip, X, Mail, History } from "lucide-react";
 import { generateProposalPDF } from "@/utils/pdfGenerator";
@@ -102,12 +101,36 @@ export default function SendEmail() {
   const [subject, setSubject] = useState("");
   const [body, setBody] = useState("");
   const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [quillEditor, setQuillEditor] = useState<ComponentType<any> | null>(null);
 
   useEffect(() => {
     fetchUsers();
     fetchSentEmails();
     fetchClients();
     fetchProposals();
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+    const load = async () => {
+      try {
+        const moduleName = "react-quill";
+        const stylePath = "react-quill/dist/quill.snow.css";
+        const module = await import(moduleName);
+        await import(stylePath);
+        if (active) {
+          setQuillEditor(() => module.default as ComponentType<any>);
+        }
+      } catch {
+        if (active) {
+          setQuillEditor(null);
+        }
+      }
+    };
+    load();
+    return () => {
+      active = false;
+    };
   }, []);
 
   const fetchUsers = async () => {
@@ -411,6 +434,7 @@ export default function SendEmail() {
       ["clean"],
     ],
   };
+  const QuillComponent = quillEditor;
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
@@ -489,14 +513,23 @@ export default function SendEmail() {
         <div className="space-y-2">
           <Label>Mensagem: *</Label>
           <div className="bg-background border rounded-md">
-            <ReactQuill
-              theme="snow"
-              value={body}
-              onChange={setBody}
-              modules={modules}
-              placeholder="Digite sua mensagem aqui..."
-              className="min-h-[200px]"
-            />
+            {QuillComponent ? (
+              <QuillComponent
+                theme="snow"
+                value={body}
+                onChange={setBody}
+                modules={modules}
+                placeholder="Digite sua mensagem aqui..."
+                className="min-h-[200px]"
+              />
+            ) : (
+              <Textarea
+                value={body}
+                onChange={(event) => setBody(event.target.value)}
+                placeholder="Digite sua mensagem aqui..."
+                className="min-h-[200px]"
+              />
+            )}
           </div>
         </div>
 
