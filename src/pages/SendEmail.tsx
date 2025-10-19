@@ -339,20 +339,33 @@ export default function SendEmail() {
     setSending(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke("send-email", {
-        body: {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      const baseUrl = import.meta.env.VITE_BACKEND_URL || "";
+      const normalizedBaseUrl = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
+      const response = await fetch(`${normalizedBaseUrl}/emails/send`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
           from: fromEmail,
           to: toEmail,
           subject: subject,
           html: body,
-          attachments: attachments.map(att => ({
+          attachments: attachments.map((att) => ({
             filename: att.file.name,
             content: att.base64,
           })),
-        },
+        }),
       });
 
-      if (error) throw error;
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data?.error || "Erro ao enviar email");
+      }
 
       if (data?.success) {
         toast.success("Email enviado com sucesso!");
