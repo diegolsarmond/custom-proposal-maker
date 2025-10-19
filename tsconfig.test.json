@@ -1,0 +1,15 @@
+{
+  "extends": "./tsconfig.node.json",
+  "compilerOptions": {
+    "outDir": "dist-tests",
+    "noEmit": false,
+    "types": ["node"],
+    "moduleResolution": "nodenext",
+    "module": "nodenext",
+    "allowImportingTsExtensions": false
+  },
+  "include": [
+    "src/integrations/supabase/legacySession.ts",
+    "src/integrations/supabase/legacySession.test.ts"
+  ]
+}
