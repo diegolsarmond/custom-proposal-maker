@@ -69,63 +69,92 @@ export const generateProposalPDF = async (
   };
 
   const drawFooter = () => {
-    // Ajustes feitos aqui:
-    // - footerY mais acima para evitar corte
-    // - alinhamento do texto próximo ao respectivo ícone
-    // - splitTextToSize com larguras maiores para evitar quebras desnecessárias
-    const footerY = 262; // antes: 270
+    // Colunas em uma linha: telefone | endereço (centro) | site
+    const footerY = 262; // sobe o rodapé para evitar corte
     const iconSize = 5;
-    const phoneIconX = 15;
-    const locationIconX = 40;
-    const globeIconX = 72;
+    const pageWidth = 210;
+    const margin = 10;
+    const colGap = 6;
+    const fontSize = 10;
 
-    const phoneTextX = phoneIconX + iconSize + 1; // 21
-    const addressTextX = locationIconX + iconSize + 3; // 48
-    const websiteTextX = globeIconX + iconSize + 8; // 80
+    // calculo das colunas (3 colunas, espaço interno entre margens)
+    const totalInner = pageWidth - margin * 2;
+    const colWidth = (totalInner - colGap * 2) / 3; // largura de cada coluna
+    const leftStart = margin;
+    const centerStart = margin + colWidth + colGap;
+    const rightStart = margin + (colWidth + colGap) * 2;
 
     doc.setDrawColor(accent[0], accent[1], accent[2]);
     doc.setLineWidth(0.4);
-    doc.line(10, footerY, 200, footerY);
+    doc.line(margin, footerY, pageWidth - margin, footerY);
 
-    // Phone
-    try {
-      doc.addImage(phoneIcon, "PNG", phoneIconX, footerY + 6, iconSize, iconSize);
-    } catch (e) {
-      // Se ícone não carregar, não quebra o PDF
-      /* no-op */
-    }
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(10);
-    doc.setTextColor(text[0], text[1], text[2]);
+    // helper para truncar texto para caber numa largura (considerando fontSize atual)
+    const truncateToWidth = (rawText: string, maxW: number) => {
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(fontSize);
+      if (doc.getTextWidth(rawText) <= maxW) return rawText;
+      let t = rawText;
+      // deixa espaço para "..." ao medir
+      while (t.length > 0 && doc.getTextWidth(t + "...") > maxW) {
+        t = t.slice(0, -1);
+      }
+      return t.length ? t + "..." : "";
+    };
+
+    // Linha base para os textos
+    const baseTextY = footerY + 9;
+
+    // ===== Telefone (coluna esquerda) =====
     const phoneText = data.companyConfig.phone || "(31) 99305-4200";
-    const baseTextY = footerY + 9; // linha base para o primeiro texto
-    doc.text(phoneText, phoneTextX, baseTextY);
+    const leftIconX = leftStart + 2;
+    const leftTextMaxW = colWidth - (iconSize + 4);
+    const phoneTextTrunc = truncateToWidth(phoneText, leftTextMaxW);
+    const phoneTextX = leftIconX + iconSize + 2;
 
-    // Address (próximo ao ícone)
     try {
-      doc.addImage(locationIcon, "PNG", locationIconX, footerY + 6, iconSize, iconSize);
+      doc.addImage(phoneIcon, "PNG", leftIconX, footerY + 6, iconSize, iconSize);
     } catch (e) {
       /* no-op */
     }
+    doc.setFontSize(fontSize);
+    doc.setTextColor(text[0], text[1], text[2]);
+    doc.text(phoneTextTrunc, phoneTextX, baseTextY);
+
+    // ===== Endereço (coluna central) - centralizado dentro da coluna =====
     const addressText = data.companyConfig.address || "Rua Antônio de Albuquerque, 330 - Sala 901, BH/MG";
-    // aumenta width para evitar quebras exageradas (anterior 26)
-    const addressLines = doc.splitTextToSize(addressText, 70);
-    addressLines.forEach((line, index) => {
-      doc.text(line, addressTextX, baseTextY + index * 5);
-    });
-
-    // Website (próximo ao ícone)
+    const centerIconXCandidate = centerStart + 2;
+    const centerTextMaxW = colWidth - (iconSize + 6);
+    doc.setFontSize(fontSize);
+    const addressTextTrunc = truncateToWidth(addressText, centerTextMaxW);
+    // medir largura do texto truncado para centralizar icon+gap+texto
+    const textWAddress = doc.getTextWidth(addressTextTrunc);
+    const combinedW = iconSize + 2 + textWAddress;
+    // startX para centralizar o bloco dentro da coluna central
+    const centerBlockStartX = centerStart + (colWidth - combinedW) / 2;
     try {
-      doc.addImage(globeIcon, "PNG", globeIconX, footerY + 6, iconSize, iconSize);
+      doc.addImage(locationIcon, "PNG", centerBlockStartX, footerY + 6, iconSize, iconSize);
     } catch (e) {
       /* no-op */
     }
+    const addressTextX = centerBlockStartX + iconSize + 2;
+    doc.text(addressTextTrunc, addressTextX, baseTextY);
+
+    // ===== Website (coluna direita) - alinhado à direita da coluna =====
     const websiteText = (data.companyConfig as any).website || "www.quantumtecnologia.com.br";
-    // aumenta width para evitar quebras exageradas (anterior 28)
-    const websiteLines = doc.splitTextToSize(websiteText, 40);
-    websiteLines.forEach((line, index) => {
-      doc.text(line, websiteTextX, baseTextY + index * 5);
-    });
+    const rightTextMaxW = colWidth - (iconSize + 6);
+    const websiteTextTrunc = truncateToWidth(websiteText, rightTextMaxW);
+    doc.setFontSize(fontSize);
+    const textWWebsite = doc.getTextWidth(websiteTextTrunc);
+    // posição direita do texto dentro da coluna
+    const rightColumnRightX = rightStart + colWidth - 2;
+    const websiteTextX = rightColumnRightX;
+    const iconForWebsiteX = websiteTextX - textWWebsite - 2 - iconSize;
+    try {
+      doc.addImage(globeIcon, "PNG", iconForWebsiteX, footerY + 6, iconSize, iconSize);
+    } catch (e) {
+      /* no-op */
+    }
+    doc.text(websiteTextTrunc, websiteTextX, baseTextY, { align: "right" });
   };
 
   // ========= CAPA (modelo anexo) =========
