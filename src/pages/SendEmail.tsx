@@ -10,11 +10,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
 import "./SendEmail.css";
-import { Send, Paperclip, X } from "lucide-react";
+import { Send, Paperclip, X, Mail, History } from "lucide-react";
 
 interface Profile {
   id: string;
@@ -27,10 +37,25 @@ interface Attachment {
   base64: string;
 }
 
+interface SentEmail {
+  id: string;
+  from_email: string;
+  to_email: string;
+  subject: string;
+  html_body: string;
+  attachments_count: number;
+  status: string;
+  resend_id: string | null;
+  sent_at: string;
+  error_message: string | null;
+}
+
 export default function SendEmail() {
   const [users, setUsers] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
+  const [sentEmails, setSentEmails] = useState<SentEmail[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
   
   const [fromEmail, setFromEmail] = useState("");
   const [toEmail, setToEmail] = useState("");
@@ -40,6 +65,7 @@ export default function SendEmail() {
 
   useEffect(() => {
     fetchUsers();
+    fetchSentEmails();
   }, []);
 
   const fetchUsers = async () => {
@@ -55,6 +81,23 @@ export default function SendEmail() {
       setUsers(data || []);
     }
     setLoading(false);
+  };
+
+  const fetchSentEmails = async () => {
+    setLoadingHistory(true);
+    const { data, error } = await supabase
+      .from("sent_emails")
+      .select("*")
+      .order("sent_at", { ascending: false })
+      .limit(50);
+
+    if (error) {
+      toast.error("Erro ao carregar histórico");
+      console.error(error);
+    } else {
+      setSentEmails(data || []);
+    }
+    setLoadingHistory(false);
   };
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -134,6 +177,8 @@ export default function SendEmail() {
         setSubject("");
         setBody("");
         setAttachments([]);
+        // Atualiza o histórico
+        fetchSentEmails();
       } else {
         throw new Error(data?.error || "Erro ao enviar email");
       }
@@ -158,15 +203,28 @@ export default function SendEmail() {
   };
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
+    <div className="space-y-6 max-w-6xl mx-auto">
       <div>
-        <h1 className="text-3xl font-bold">Enviar Email</h1>
+        <h1 className="text-3xl font-bold">Gestão de Emails</h1>
         <p className="text-muted-foreground">
-          Envie emails formatados para seus clientes
+          Envie emails formatados e visualize o histórico de envios
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6 bg-card border rounded-lg p-6">
+      <Tabs defaultValue="send" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="send" className="gap-2">
+            <Mail className="w-4 h-4" />
+            Enviar Email
+          </TabsTrigger>
+          <TabsTrigger value="history" className="gap-2">
+            <History className="w-4 h-4" />
+            Histórico
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="send" className="mt-6">
+          <form onSubmit={handleSubmit} className="space-y-6 bg-card border rounded-lg p-6">
         <div className="space-y-2">
           <Label htmlFor="from">De: *</Label>
           <Select value={fromEmail} onValueChange={setFromEmail} disabled={loading}>
@@ -275,10 +333,76 @@ export default function SendEmail() {
           </Button>
         </div>
 
-        <p className="text-xs text-muted-foreground">
-          * Campos obrigatórios. Uma cópia oculta será enviada para contato@quantumtecnologia.com.br
-        </p>
-      </form>
+            <p className="text-xs text-muted-foreground">
+              * Campos obrigatórios. Uma cópia oculta será enviada para contato@quantumtecnologia.com.br
+            </p>
+          </form>
+        </TabsContent>
+
+        <TabsContent value="history" className="mt-6">
+          <div className="bg-card border rounded-lg p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold">Histórico de Emails Enviados</h2>
+              <Button variant="outline" size="sm" onClick={fetchSentEmails}>
+                Atualizar
+              </Button>
+            </div>
+
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Status</TableHead>
+                  <TableHead>De</TableHead>
+                  <TableHead>Para</TableHead>
+                  <TableHead>Assunto</TableHead>
+                  <TableHead>Anexos</TableHead>
+                  <TableHead>Data/Hora</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {loadingHistory ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center">
+                      Carregando...
+                    </TableCell>
+                  </TableRow>
+                ) : sentEmails.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center">
+                      Nenhum email enviado ainda
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  sentEmails.map((email) => (
+                    <TableRow key={email.id}>
+                      <TableCell>
+                        <Badge
+                          variant={email.status === 'sent' ? 'default' : 'destructive'}
+                        >
+                          {email.status === 'sent' ? 'Enviado' : 'Falhou'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="font-medium">{email.from_email}</TableCell>
+                      <TableCell>{email.to_email}</TableCell>
+                      <TableCell>{email.subject}</TableCell>
+                      <TableCell className="text-center">
+                        {email.attachments_count > 0 ? (
+                          <Badge variant="outline">{email.attachments_count}</Badge>
+                        ) : (
+                          '-'
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {new Date(email.sent_at).toLocaleString('pt-BR')}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

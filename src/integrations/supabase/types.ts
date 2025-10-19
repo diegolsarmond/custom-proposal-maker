@@ -182,11 +182,8 @@ export type Database = {
           intro_text: string
           objective_text: string
           observations: string | null
-          proposal_number: string
           responsible: string
           services_text: string
-          sequence_number: number
-          sequence_year: number
           updated_at: string
           why_text: string
         }
@@ -203,11 +200,8 @@ export type Database = {
           intro_text: string
           objective_text: string
           observations?: string | null
-          proposal_number?: string
           responsible: string
           services_text: string
-          sequence_number?: number
-          sequence_year?: number
           updated_at?: string
           why_text: string
         }
@@ -224,11 +218,8 @@ export type Database = {
           intro_text?: string
           objective_text?: string
           observations?: string | null
-          proposal_number?: string
           responsible?: string
           services_text?: string
-          sequence_number?: number
-          sequence_year?: number
           updated_at?: string
           why_text?: string
         }
@@ -248,6 +239,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      sent_emails: {
+        Row: {
+          attachments_count: number | null
+          error_message: string | null
+          from_email: string
+          html_body: string
+          id: string
+          resend_id: string | null
+          sent_at: string
+          sent_by: string | null
+          status: string
+          subject: string
+          to_email: string
+        }
+        Insert: {
+          attachments_count?: number | null
+          error_message?: string | null
+          from_email: string
+          html_body: string
+          id?: string
+          resend_id?: string | null
+          sent_at?: string
+          sent_by?: string | null
+          status?: string
+          subject: string
+          to_email: string
+        }
+        Update: {
+          attachments_count?: number | null
+          error_message?: string | null
+          from_email?: string
+          html_body?: string
+          id?: string
+          resend_id?: string | null
+          sent_at?: string
+          sent_by?: string | null
+          status?: string
+          subject?: string
+          to_email?: string
+        }
+        Relationships: []
       }
     }
     Views: {

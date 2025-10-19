@@ -20,7 +20,9 @@ interface Proposal {
   date: string;
   responsible: string;
   created_at: string;
-  proposal_number: string;
+  proposal_number?: string;
+  sequence_number?: number;
+  sequence_year?: number;
   clients: {
     name: string;
     company_name: string;
@@ -133,7 +135,7 @@ export default function Proposals() {
       phone: proposalData.clients.phone || "",
       date: proposalData.date,
       segment: proposalData.clients.segment || "",
-      proposalNumber: proposalData.proposal_number || "",
+      proposalNumber: (proposalData as any).proposal_number || "",
       proposalId: String(proposalData.id),
       selectedAutomations,
       observations: proposalData.observations || "",
@@ -202,7 +204,7 @@ export default function Proposals() {
               proposals.map((proposal) => (
                 <TableRow key={proposal.id}>
                   <TableCell className="font-medium">
-                    {proposal.proposal_number}
+                    {proposal.proposal_number || '-'}
                   </TableCell>
                   <TableCell className="font-medium">
                     {proposal.clients.name}

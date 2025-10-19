@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3';
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -21,8 +22,33 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+  const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+  const supabase = createClient(supabaseUrl, supabaseKey);
+
+  // Pega o token do usuário do header de autorização
+  const authHeader = req.headers.get('Authorization');
+  const token = authHeader?.replace('Bearer ', '');
+  let userId: string | null = null;
+  
+  if (token) {
+    const { data: { user } } = await supabase.auth.getUser(token);
+    userId = user?.id || null;
+  }
+
+  let from = '';
+  let to = '';
+  let subject = '';
+  let html = '';
+  let attachments: any[] | undefined;
+
   try {
-    const { from, to, subject, html, attachments }: SendEmailRequest = await req.json();
+    const requestData: SendEmailRequest = await req.json();
+    from = requestData.from;
+    to = requestData.to;
+    subject = requestData.subject;
+    html = requestData.html;
+    attachments = requestData.attachments;
 
     console.log("Sending email from:", from, "to:", to);
 
@@ -72,6 +98,25 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("Email enviado com sucesso:", result);
 
+    // Salva o histórico do email enviado
+    const { error: dbError } = await supabase
+      .from('sent_emails')
+      .insert({
+        from_email: from,
+        to_email: to,
+        subject: subject,
+        html_body: html,
+        attachments_count: attachments?.length || 0,
+        status: 'sent',
+        resend_id: result.id,
+        sent_by: userId,
+      });
+
+    if (dbError) {
+      console.error("Erro ao salvar histórico:", dbError);
+      // Não falhamos a requisição se apenas o histórico falhar
+    }
+
     return new Response(JSON.stringify({ 
       success: true, 
       id: result.id 
@@ -84,6 +129,23 @@ const handler = async (req: Request): Promise<Response> => {
     });
   } catch (error: any) {
     console.error("Erro ao enviar email:", error);
+    
+    // Tenta salvar o erro no histórico
+    if (userId) {
+      await supabase
+        .from('sent_emails')
+        .insert({
+          from_email: from || 'unknown',
+          to_email: to || 'unknown',
+          subject: subject || 'unknown',
+          html_body: html || '',
+          attachments_count: attachments?.length || 0,
+          status: 'failed',
+          error_message: error.message,
+          sent_by: userId,
+        });
+    }
+    
     return new Response(
       JSON.stringify({ 
         success: false, 

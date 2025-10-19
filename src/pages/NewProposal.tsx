@@ -384,29 +384,30 @@ export default function NewProposal() {
       proposalData = data;
     }
 
-    if (!proposalData?.proposal_number) {
+    if (!(proposalData as any)?.proposal_number) {
       const { data: proposalNumberData } = await supabase
         .from("proposals")
-        .select("proposal_number, sequence_number, sequence_year")
+        .select("*")
         .eq("id", proposalData.id)
         .single();
 
       if (proposalNumberData) {
         proposalData = {
           ...proposalData,
-          ...proposalNumberData,
+          ...(proposalNumberData as any),
         };
       }
 
+      const pdData = proposalData as any;
       if (
-        !proposalData.proposal_number &&
-        proposalData.sequence_number &&
-        proposalData.sequence_year
+        !pdData.proposal_number &&
+        pdData.sequence_number &&
+        pdData.sequence_year
       ) {
         proposalData = {
           ...proposalData,
-          proposal_number: `${String(proposalData.sequence_number).padStart(3, "0")}/${proposalData.sequence_year}`,
-        };
+          proposal_number: `${String(pdData.sequence_number).padStart(3, "0")}/${pdData.sequence_year}`,
+        } as any;
       }
     }
 
