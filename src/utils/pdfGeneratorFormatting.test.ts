@@ -8,6 +8,7 @@ class RecordingJsPDF {
   addImageCalls: { x: number; y: number; w: number; h: number }[] = [];
   lastAutoTable: { finalY: number } | null = null;
   fontSize = 11;
+  addPageCalls = 0;
   internal = {
     pageSize: {
       getWidth: () => 210,
@@ -49,7 +50,9 @@ class RecordingJsPDF {
   setLineWidth() {}
   line() {}
   circle() {}
-  addPage() {}
+  addPage() {
+    this.addPageCalls += 1;
+  }
   getTextWidth(text: string) {
     return text.length * (this.fontSize * 0.25 || 1);
   }
@@ -123,6 +126,76 @@ test("renderiza formatações de texto e enumera observações", async () => {
 
   const hasItalic = instance.fontCalls.some((entry) => entry.style === "italic");
   assert.ok(hasItalic, "formatação itálica não foi aplicada");
+
+  fetchMock.mock.restore();
+  if (originalFileReader) {
+    (globalThis as any).FileReader = originalFileReader;
+  } else {
+    delete (globalThis as any).FileReader;
+  }
+  mock.reset();
+});
+
+test("posiciona observações na página seguinte", async () => {
+  RecordingJsPDF.instances = [];
+  mock.module("jspdf", { defaultExport: RecordingJsPDF });
+  mock.module("jspdf-autotable", {
+    defaultExport: (doc: any) => {
+      doc.lastAutoTable = { finalY: 120 };
+    },
+  });
+
+  const fetchMock = mock.method(globalThis, "fetch", async () => ({
+    blob: async () => ({ mockSrc: "mock" }),
+  }));
+
+  const originalFileReader = (globalThis as any).FileReader;
+  class StubFileReader {
+    result = "";
+    onloadend: (() => void) | null = null;
+    onerror: (() => void) | null = null;
+    readAsDataURL(blob: any) {
+      this.result = `data:${blob.mockSrc}`;
+      if (this.onloadend) this.onloadend();
+    }
+  }
+  (globalThis as any).FileReader = StubFileReader as any;
+
+  const { generateProposalPDF } = await import("./pdfGenerator.js");
+
+  await generateProposalPDF({
+    date: "2024-01-01",
+    clientName: "Mariana Lima",
+    companyName: "SIPI Sistemas",
+    companyConfig: {
+      name: "SIPI Sistemas",
+      address: "Rua Teste, 123",
+      phone: "31993054200",
+      website: "www.sipi.com.br",
+    },
+    responsible: "Time Comercial",
+    proposalNumber: "#0017/2025",
+    proposalTexts: {
+      introductionText: "Introdução",
+      objectiveText: "Objetivo",
+      servicesText: "Serviços",
+      whyText: "Motivos",
+    },
+    observations: "Primeira nota\nSegunda nota",
+    selectedAutomations: {},
+    pricingLabels: {
+      implantation: "Implantação (R$)",
+      recurrence: "Recorrência",
+    },
+  } as any, { returnData: "datauristring" });
+
+  const instance = RecordingJsPDF.instances[0];
+  assert.ok(instance, "instância do PDF não foi criada");
+  assert.equal(instance.addPageCalls, 4);
+
+  const observationsTitle = instance.textCalls.find((entry) => entry.text === "Observações");
+  assert.ok(observationsTitle, "título de observações não foi renderizado");
+  assert.equal(observationsTitle.y, 50);
 
   fetchMock.mock.restore();
   if (originalFileReader) {

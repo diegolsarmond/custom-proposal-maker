@@ -731,7 +731,14 @@ export const generateProposalPDF = async (
   doc.setTextColor(text[0], text[1], text[2]);
   renderSectionContent(data.proposalTexts.whyText || "", 4);
 
+  drawFooter();
+
   if (data.observations) {
+    doc.addPage();
+    drawContentHeader();
+
+    y = 50;
+
     doc.setFont("helvetica", "bold");
     doc.setFontSize(12);
     doc.setTextColor(primary[0], primary[1], primary[2]);
@@ -751,9 +758,9 @@ export const generateProposalPDF = async (
       });
       y += 2;
     });
-  }
 
-  drawFooter();
+    drawFooter();
+  }
 
   // Salvar
   const fileName = formatProposalPdfFileName(data.clientName, data.date);
