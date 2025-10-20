@@ -152,3 +152,64 @@ test('falha com resposta html retorna mensagem sanitizada', async () => {
   assert.equal(insertCalls[0].error_message, '404 Not Found nginx/1.29.2');
   assert.equal(insertCalls[0].sent_by, 'user-3');
 });
+
+test('envio continua mesmo sem cliente do supabase', async () => {
+  const fetchMock = mock.fn(async () => ({
+    ok: true,
+    text: async () => JSON.stringify({ id: 'resend-456' }),
+  }));
+
+  const handler = createSendEmailHandler({
+    createSupabaseClient: mock.fn(() => {
+      throw new Error('indisponível');
+    }) as any,
+    fetchImpl: fetchMock as any,
+    resendApiKey: 'resend-test-key',
+  });
+
+  const result = await handler(
+    {
+      from: 'origem@exemplo.com',
+      to: 'destino@exemplo.com',
+      subject: 'Assunto',
+      html: '<p>Corpo</p>',
+    },
+    {},
+  );
+
+  assert.equal(result.status, 200);
+  assert.equal(fetchMock.mock.calls.length, 1);
+});
+
+test('retorna erro claro quando serviço de email não está configurado', async () => {
+  const supabaseFactory = mock.fn(() => {
+    throw new Error('não deve ser chamado');
+  });
+
+  const fetchMock = mock.fn(async () => ({
+    ok: true,
+    text: async () => JSON.stringify({ id: 'resend-789' }),
+  }));
+
+  const handler = createSendEmailHandler({
+    createSupabaseClient: supabaseFactory as any,
+    fetchImpl: fetchMock as any,
+    resendApiKey: '',
+  });
+
+  const result = await handler(
+    {
+      from: 'origem@exemplo.com',
+      to: 'destino@exemplo.com',
+      subject: 'Assunto',
+      html: '<p>Corpo</p>',
+    },
+    {},
+  );
+
+  assert.equal(result.status, 500);
+  assert.equal((result.body as any).success, false);
+  assert.equal((result.body as any).error, 'Serviço de email não configurado');
+  assert.equal(fetchMock.mock.calls.length, 0);
+  assert.equal(supabaseFactory.mock.calls.length, 0);
+});
