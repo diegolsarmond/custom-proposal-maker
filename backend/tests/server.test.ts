@@ -47,6 +47,11 @@ test('nao considera outras rotas como envio', async () => {
   assert.equal(matchesSendEmailRoute('/emails/status'), false);
 });
 
+test('ignora caminhos que apenas contem a rota de envio', async () => {
+  const { matchesSendEmailRoute } = await loadServerModule();
+  assert.equal(matchesSendEmailRoute('/emails/send-extra'), false);
+});
+
 test('parseia multipart convertendo anexos para base64', async () => {
   const { parseSendEmailRequest } = await loadServerModule();
   const boundary = '----test-boundary';
