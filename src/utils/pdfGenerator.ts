@@ -748,7 +748,7 @@ export const generateProposalPDF = async (
   doc.text("6", 8.3, y - 1);
     doc.setTextColor(primary[0], primary[1], primary[2]);
     doc.text("Observações", 20, y);
-    y += 6;
+    y += 8;
     doc.setFont("helvetica", "normal");
     doc.setFontSize(11);
     doc.setTextColor(text[0], text[1], text[2]);
