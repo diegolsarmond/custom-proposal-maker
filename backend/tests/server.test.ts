@@ -27,6 +27,11 @@ test('normaliza removendo query string da rota de envio', async () => {
   assert.equal(normalizePath('/emails/send?foo=bar'), '/emails/send');
 });
 
+test('normaliza removendo barra final mesmo com prefixo', async () => {
+  const { normalizePath } = await loadServerModule();
+  assert.equal(normalizePath('/crm/emails/send/'), '/crm/emails/send');
+});
+
 test('mantem a raiz quando apenas barra é enviada', async () => {
   const { normalizePath } = await loadServerModule();
   assert.equal(normalizePath('/'), '/');
@@ -40,6 +45,17 @@ test('reconhece rota de envio mesmo com prefixo', async () => {
 test('nao considera outras rotas como envio', async () => {
   const { matchesSendEmailRoute } = await loadServerModule();
   assert.equal(matchesSendEmailRoute('/emails/status'), false);
+});
+
+test('ignora caminhos que apenas contem a rota de envio', async () => {
+  const { matchesSendEmailRoute } = await loadServerModule();
+  assert.equal(matchesSendEmailRoute('/emails/send-extra'), false);
+});
+
+test('rota normalizada com prefixo ainda e encaminhada', async () => {
+  const { normalizePath, matchesSendEmailRoute } = await loadServerModule();
+  const path = normalizePath('/crm/emails/send/');
+  assert.ok(matchesSendEmailRoute(path));
 });
 
 test('parseia multipart convertendo anexos para base64', async () => {
