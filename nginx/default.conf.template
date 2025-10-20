@@ -8,8 +8,16 @@ server {
 
     client_max_body_size 10m;
 
+    set $email_backend_origin "${EMAIL_BACKEND_ORIGIN}";
+    if ($email_backend_origin = "") {
+        set $email_backend_origin "127.0.0.1:3001";
+    }
+    if ($email_backend_origin !~* "^https?://") {
+        set $email_backend_origin "http://$email_backend_origin";
+    }
+
     location /emails/ {
-        proxy_pass ${EMAIL_BACKEND_ORIGIN};
+        proxy_pass $email_backend_origin;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;

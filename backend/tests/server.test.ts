@@ -52,6 +52,12 @@ test('ignora caminhos que apenas contem a rota de envio', async () => {
   assert.equal(matchesSendEmailRoute('/emails/send-extra'), false);
 });
 
+test('rota normalizada com prefixo ainda e encaminhada', async () => {
+  const { normalizePath, matchesSendEmailRoute } = await loadServerModule();
+  const path = normalizePath('/crm/emails/send/');
+  assert.ok(matchesSendEmailRoute(path));
+});
+
 test('parseia multipart convertendo anexos para base64', async () => {
   const { parseSendEmailRequest } = await loadServerModule();
   const boundary = '----test-boundary';
