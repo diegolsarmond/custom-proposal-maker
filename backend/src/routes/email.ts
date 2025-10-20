@@ -51,6 +51,43 @@ const buildEmailPayload = (request: SendEmailRequest, fromName: string) => ({
   })),
 });
 
+const parseResendResponse = async (response: { text: () => Promise<string> }) => {
+  try {
+    const raw = await response.text();
+    if (!raw) {
+      return null;
+    }
+    const trimmed = raw.trim();
+    if (!trimmed) {
+      return null;
+    }
+    try {
+      return JSON.parse(trimmed);
+    } catch {
+      return trimmed;
+    }
+  } catch {
+    return null;
+  }
+};
+
+const extractErrorMessage = (payload: unknown) => {
+  if (!payload) {
+    return 'Erro ao enviar email';
+  }
+  if (typeof payload === 'string') {
+    const sanitized = payload.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+    return sanitized || 'Erro ao enviar email';
+  }
+  if (typeof payload === 'object') {
+    const maybeMessage = (payload as any)?.message;
+    if (typeof maybeMessage === 'string' && maybeMessage.trim()) {
+      return maybeMessage;
+    }
+  }
+  return 'Erro ao enviar email';
+};
+
 const parseAuthorization = (headers: IncomingHttpHeaders) => {
   const authHeader = headers['authorization'];
   if (!authHeader) {
@@ -125,11 +162,19 @@ export const createSendEmailHandler = (
         body: JSON.stringify(emailPayload),
       });
 
-      const result = (await response.json()) as any;
+      const result = await parseResendResponse(response);
 
       if (!response.ok) {
         console.error('Erro da API Resend:', result);
-        throw new Error(result?.message ?? 'Erro ao enviar email');
+        throw new Error(extractErrorMessage(result));
+      }
+
+      const resendId =
+        typeof result === 'object' && result !== null && !Array.isArray(result)
+          ? (result as any).id
+          : undefined;
+      if (!resendId || typeof resendId !== 'string') {
+        throw new Error('Resposta inválida do serviço de email');
       }
 
       try {
@@ -142,7 +187,7 @@ export const createSendEmailHandler = (
             html_body: body.html,
             attachments_count: body.attachments?.length ?? 0,
             status: 'sent',
-            resend_id: result.id,
+            resend_id: resendId,
             sent_by: userId,
           });
       } catch (error) {
@@ -151,7 +196,7 @@ export const createSendEmailHandler = (
 
       return {
         status: 200,
-        body: { success: true, id: result.id },
+        body: { success: true, id: resendId },
         headers: {
           'Content-Type': 'application/json',
           ...corsHeaders,
