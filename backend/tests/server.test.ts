@@ -27,6 +27,11 @@ test('normaliza removendo query string da rota de envio', async () => {
   assert.equal(normalizePath('/emails/send?foo=bar'), '/emails/send');
 });
 
+test('normaliza removendo barra final mesmo com prefixo', async () => {
+  const { normalizePath } = await loadServerModule();
+  assert.equal(normalizePath('/crm/emails/send/'), '/crm/emails/send');
+});
+
 test('mantem a raiz quando apenas barra é enviada', async () => {
   const { normalizePath } = await loadServerModule();
   assert.equal(normalizePath('/'), '/');
