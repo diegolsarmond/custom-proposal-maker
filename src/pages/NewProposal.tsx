@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
+import { ProposalTextEditor } from "@/components/ProposalTextEditor";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
@@ -16,7 +17,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { generateProposalPDF } from "@/utils/pdfGenerator";
 import { formatProposalNumber } from "@/utils/formatProposalNumber";
 import { ArrowLeft } from "lucide-react";
 
@@ -457,25 +457,6 @@ export default function NewProposal() {
       }
     }
 
-  const pdfData = {
-      clientName: selectedClient.name,
-      companyName: selectedClient.company_name,
-      document: selectedClient.document || "",
-      email: selectedClient.email,
-      phone: selectedClient.phone || "",
-      date: formData.date,
-      segment: selectedClient.segment || "",
-      proposalNumber: proposalData.proposal_number || "",
-      proposalId: String(proposalData.id),
-      selectedAutomations: formData.selectedProducts,
-      observations: formData.observations,
-      responsible: formData.responsible,
-      companyConfig: formData.companyConfig,
-      proposalTexts: formData.proposalTexts,
-      pricingLabels: formData.pricingLabels,
-    };
-
-    generateProposalPDF(pdfData);
     toast.success(
       isEditing
         ? `Proposta ${proposalData.proposal_number} atualizada com sucesso!`
@@ -735,76 +716,64 @@ export default function NewProposal() {
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="grid lg:grid-cols-2 gap-3">
-                  <div>
-                    <Label htmlFor="introText">Texto de Introdução</Label>
-                    <Textarea
-                      id="introText"
-                      value={formData.proposalTexts.introductionText}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          proposalTexts: {
-                            ...formData.proposalTexts,
-                            introductionText: e.target.value,
-                          },
-                        })
-                      }
-                      rows={3}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="objectiveText">Texto do Objetivo</Label>
-                    <Textarea
-                      id="objectiveText"
-                      value={formData.proposalTexts.objectiveText}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          proposalTexts: {
-                            ...formData.proposalTexts,
-                            objectiveText: e.target.value,
-                          },
-                        })
-                      }
-                      rows={3}
-                    />
-                  </div>
+                  <ProposalTextEditor
+                    id="introText"
+                    label="Texto de Introdução"
+                    value={formData.proposalTexts.introductionText}
+                    onChange={(value) =>
+                      setFormData({
+                        ...formData,
+                        proposalTexts: {
+                          ...formData.proposalTexts,
+                          introductionText: value,
+                        },
+                      })
+                    }
+                  />
+                  <ProposalTextEditor
+                    id="objectiveText"
+                    label="Texto do Objetivo"
+                    value={formData.proposalTexts.objectiveText}
+                    onChange={(value) =>
+                      setFormData({
+                        ...formData,
+                        proposalTexts: {
+                          ...formData.proposalTexts,
+                          objectiveText: value,
+                        },
+                      })
+                    }
+                  />
                 </div>
                 <div className="grid lg:grid-cols-2 gap-3">
-                  <div>
-                    <Label htmlFor="servicesText">Serviços Atribuídos</Label>
-                    <Textarea
-                      id="servicesText"
-                      value={formData.proposalTexts.servicesText}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          proposalTexts: {
-                            ...formData.proposalTexts,
-                            servicesText: e.target.value,
-                          },
-                        })
-                      }
-                      rows={3}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="whyText">Por que contratar?</Label>
-                    <Textarea
-                      id="whyText"
-                      value={formData.proposalTexts.whyText}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          proposalTexts: {
-                            ...formData.proposalTexts,
-                            whyText: e.target.value,
-                          },
-                        })
-                      }
-                      rows={3}
-                    />
-                  </div>
+                  <ProposalTextEditor
+                    id="servicesText"
+                    label="Serviços Atribuídos"
+                    value={formData.proposalTexts.servicesText}
+                    onChange={(value) =>
+                      setFormData({
+                        ...formData,
+                        proposalTexts: {
+                          ...formData.proposalTexts,
+                          servicesText: value,
+                        },
+                      })
+                    }
+                  />
+                  <ProposalTextEditor
+                    id="whyText"
+                    label="Por que contratar?"
+                    value={formData.proposalTexts.whyText}
+                    onChange={(value) =>
+                      setFormData({
+                        ...formData,
+                        proposalTexts: {
+                          ...formData.proposalTexts,
+                          whyText: value,
+                        },
+                      })
+                    }
+                  />
                 </div>
               </CardContent>
             </Card>
@@ -834,9 +803,7 @@ export default function NewProposal() {
                 Cancelar
               </Button>
               <Button type="submit">
-                {isEditing
-                  ? "Salvar alterações e gerar PDF"
-                  : "Gerar Proposta e PDF"}
+                {isEditing ? "Salvar alterações" : "Salvar Proposta"}
               </Button>
             </div>
           </>

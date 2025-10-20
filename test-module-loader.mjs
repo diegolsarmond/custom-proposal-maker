@@ -15,6 +15,7 @@ const aliasMap = new Map([
   ["jspdf-autotable", "dist-tests/src/test-stubs/jspdf-autotable.js"],
   ["utils/formatProposalNumber", "dist-tests/src/utils/formatProposalNumber.js"],
   ["components/ProposalForm", "dist-tests/src/test-stubs/components/ProposalForm.js"],
+  ["components/ProposalTextEditor", "dist-tests/src/test-stubs/components/ProposalTextEditor.js"],
   ["assets/quantum-logo.png", "dist-tests/src/test-stubs/assets/quantum-logo.png.js"],
   ["utils/resolveProposalNumber", "dist-tests/src/utils/resolveProposalNumber.js"],
 ]);
