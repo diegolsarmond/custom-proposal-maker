@@ -102,6 +102,7 @@ export default function SendEmail() {
   const [body, setBody] = useState("");
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [quillEditor, setQuillEditor] = useState<ComponentType<any> | null>(null);
+  const [showClientSuggestions, setShowClientSuggestions] = useState(false);
 
   useEffect(() => {
     fetchUsers();
@@ -439,6 +440,30 @@ export default function SendEmail() {
   };
   const QuillComponent = quillEditor;
 
+  const normalizedClientQuery = toEmail.trim().toLowerCase();
+  const filteredClientSuggestions = clients
+    .filter((client) => !!client.email)
+    .filter((client) => {
+      if (!normalizedClientQuery) {
+        return true;
+      }
+      const email = (client.email as string).toLowerCase();
+      const name = client.name.toLowerCase();
+      return email.includes(normalizedClientQuery) || name.includes(normalizedClientQuery);
+    })
+    .slice(0, 8);
+  const shouldShowClientSuggestions =
+    showClientSuggestions && filteredClientSuggestions.length > 0;
+
+  const handleClientSuggestionClick = (email: string) => {
+    setToEmail(email);
+    setShowClientSuggestions(false);
+  };
+
+  const handleToEmailBlur = () => {
+    setTimeout(() => setShowClientSuggestions(false), 120);
+  };
+
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
       <div>
@@ -480,26 +505,46 @@ export default function SendEmail() {
 
         <div className="space-y-2">
           <Label htmlFor="to">Para: *</Label>
-          <Input
-            id="to"
-            type="email"
-            placeholder="destinatario@exemplo.com"
-            value={toEmail}
-            onChange={(e) => setToEmail(e.target.value)}
-            list="client-email-list"
-            required
-          />
-          <datalist id="client-email-list">
-            {clients
-              .filter((client) => !!client.email)
-              .map((client) => (
-                <option
-                  key={client.id}
-                  value={client.email as string}
-                  label={`${client.name} (${client.email})`}
-                />
-              ))}
-          </datalist>
+          <div className="relative">
+            <Input
+              id="to"
+              type="email"
+              placeholder="destinatario@exemplo.com"
+              value={toEmail}
+              onChange={(event) => {
+                setToEmail(event.target.value);
+                setShowClientSuggestions(true);
+              }}
+              onFocus={() => setShowClientSuggestions(true)}
+              onBlur={handleToEmailBlur}
+              required
+              autoComplete="off"
+            />
+            {shouldShowClientSuggestions && (
+              <div className="absolute z-10 mt-1 w-full rounded-md border bg-popover shadow-sm">
+                <ul className="max-h-56 overflow-auto py-1">
+                  {filteredClientSuggestions.map((client) => (
+                    <li key={client.id}>
+                      <button
+                        type="button"
+                        data-testid="client-suggestion"
+                        className="flex w-full flex-col items-start gap-0.5 px-3 py-2 text-left text-sm hover:bg-muted"
+                        onMouseDown={(event) => {
+                          event.preventDefault();
+                          handleClientSuggestionClick(client.email as string);
+                        }}
+                      >
+                        <span className="font-medium">{client.name}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {client.email}
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="space-y-2">
