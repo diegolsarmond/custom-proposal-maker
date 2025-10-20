@@ -32,6 +32,16 @@ test('mantem a raiz quando apenas barra é enviada', async () => {
   assert.equal(normalizePath('/'), '/');
 });
 
+test('reconhece rota de envio mesmo com prefixo', async () => {
+  const { matchesSendEmailRoute } = await loadServerModule();
+  assert.ok(matchesSendEmailRoute('/api/emails/send'));
+});
+
+test('nao considera outras rotas como envio', async () => {
+  const { matchesSendEmailRoute } = await loadServerModule();
+  assert.equal(matchesSendEmailRoute('/emails/status'), false);
+});
+
 test('parseia multipart convertendo anexos para base64', async () => {
   const { parseSendEmailRequest } = await loadServerModule();
   const boundary = '----test-boundary';

@@ -141,6 +141,13 @@ export const normalizePath = (url?: string | null) => {
   return path.replace(/\/+$/, '');
 };
 
+export const matchesSendEmailRoute = (path: string) => {
+  if (!path) {
+    return false;
+  }
+  return path === '/emails/send' || path.endsWith('/emails/send');
+};
+
 const server = createServer(async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', corsHeaders['Access-Control-Allow-Origin']);
   res.setHeader('Access-Control-Allow-Headers', corsHeaders['Access-Control-Allow-Headers']);
@@ -153,7 +160,7 @@ const server = createServer(async (req, res) => {
 
   const path = normalizePath(req.url);
 
-  if (req.method === 'POST' && path === '/emails/send') {
+  if (req.method === 'POST' && matchesSendEmailRoute(path)) {
     try {
       const body = await parseSendEmailRequest(req);
       const result = await sendEmailHandler(body, req.headers);
