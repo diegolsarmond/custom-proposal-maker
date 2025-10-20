@@ -1,6 +1,5 @@
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import type { ProposalData } from "../components/ProposalForm";
 import logoImage from "@/assets/quantum-logo.png";
 import { formatProposalPdfFileName } from "./proposalFileName.js";
 
@@ -11,6 +10,46 @@ const ICON_LOCATION = "/icons/location.png";
 const ICON_GLOBE = "/icons/globe.png";
 
 const imageCache: Record<string, string> = {};
+
+type ProposalData = {
+  clientName: string;
+  companyName: string;
+  document?: string;
+  email?: string;
+  phone?: string;
+  date: string;
+  segment?: string;
+  proposalNumber?: string;
+  proposalId?: string;
+  selectedAutomations: Record<
+    string,
+    {
+      selected: boolean;
+      name?: string;
+      description?: string;
+      implantation?: number | string;
+      recurrence?: number | string;
+    }
+  >;
+  observations?: string;
+  responsible?: string;
+  companyConfig: {
+    name?: string;
+    address?: string;
+    phone?: string;
+    website?: string;
+  };
+  proposalTexts: {
+    introductionText: string;
+    objectiveText: string;
+    servicesText: string;
+    whyText: string;
+  };
+  pricingLabels: {
+    implantation?: string;
+    recurrence?: string;
+  };
+};
 
 const loadImageData = async (src: string) => {
   if (imageCache[src]) {
@@ -26,6 +65,218 @@ const loadImageData = async (src: string) => {
   });
   imageCache[src] = dataUrl;
   return dataUrl;
+};
+
+type SegmentStyle = "normal" | "bold" | "italic" | "bolditalic";
+
+interface FormattedSegment {
+  text: string;
+  style: SegmentStyle;
+}
+
+const mergeStyles = (a: SegmentStyle, b: SegmentStyle): SegmentStyle => {
+  const hasBold = a === "bold" || a === "bolditalic" || b === "bold" || b === "bolditalic";
+  const hasItalic = a === "italic" || a === "bolditalic" || b === "italic" || b === "bolditalic";
+  if (hasBold && hasItalic) return "bolditalic";
+  if (hasBold) return "bold";
+  if (hasItalic) return "italic";
+  return "normal";
+};
+
+const parseSegments = (text: string, current: SegmentStyle = "normal"): FormattedSegment[] => {
+  const segments: FormattedSegment[] = [];
+  let index = 0;
+
+  while (index < text.length) {
+    if (text.startsWith("**", index)) {
+      const end = text.indexOf("**", index + 2);
+      if (end !== -1) {
+        segments.push(
+          ...parseSegments(text.slice(index + 2, end), mergeStyles(current, "bold")),
+        );
+        index = end + 2;
+        continue;
+      }
+    }
+
+    if (text[index] === "_") {
+      const end = text.indexOf("_", index + 1);
+      if (end !== -1) {
+        segments.push(
+          ...parseSegments(text.slice(index + 1, end), mergeStyles(current, "italic")),
+        );
+        index = end + 1;
+        continue;
+      }
+    }
+
+    let nextIndex = text.length;
+    const nextBold = text.indexOf("**", index);
+    if (nextBold !== -1 && nextBold < nextIndex) {
+      nextIndex = nextBold;
+    }
+    const nextItalic = text.indexOf("_", index);
+    if (nextItalic !== -1 && nextItalic < nextIndex) {
+      nextIndex = nextItalic;
+    }
+
+    const plain = text.slice(index, nextIndex);
+    if (plain) {
+      segments.push({ text: plain, style: current });
+    }
+    index = nextIndex;
+  }
+
+  if (segments.length === 0 && current !== "normal") {
+    segments.push({ text: "", style: current });
+  }
+
+  return segments;
+};
+
+const fontForStyle = (style: SegmentStyle) => {
+  if (style === "bold" || style === "bolditalic") return "bold";
+  if (style === "italic") return "italic";
+  return "normal";
+};
+
+const measureTextWidth = (
+  doc: jsPDF,
+  value: string,
+  style: SegmentStyle,
+  fontSize: number,
+) => {
+  const normalized = value || "";
+  const prevSize = typeof doc.getFontSize === "function" ? doc.getFontSize() : fontSize;
+  doc.setFont("helvetica", fontForStyle(style));
+  doc.setFontSize(fontSize);
+  const width = typeof (doc as any).getTextWidth === "function"
+    ? (doc as any).getTextWidth(normalized)
+    : normalized.length * (fontSize * 0.25);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(prevSize);
+  return width;
+};
+
+const layoutSegments = (
+  doc: jsPDF,
+  segments: FormattedSegment[],
+  availableWidth: number,
+  fontSize: number,
+) => {
+  const lines: FormattedSegment[][] = [];
+  let currentLine: FormattedSegment[] = [];
+  let currentWidth = 0;
+
+  const pushLine = () => {
+    lines.push(currentLine);
+    currentLine = [];
+    currentWidth = 0;
+  };
+
+  segments.forEach((segment) => {
+    const parts = segment.text.split(/(\s+)/);
+    parts.forEach((part) => {
+      if (!part) {
+        return;
+      }
+
+      const width = measureTextWidth(doc, part, segment.style, fontSize);
+      const trimmed = part.trim();
+
+      if (width > availableWidth && currentLine.length === 0) {
+        currentLine.push({ text: part, style: segment.style });
+        pushLine();
+        return;
+      }
+
+      if (currentWidth + width > availableWidth && currentLine.length > 0) {
+        pushLine();
+      }
+
+      if (!trimmed && currentLine.length === 0) {
+        return;
+      }
+
+      currentLine.push({ text: part, style: segment.style });
+      currentWidth += width;
+    });
+  });
+
+  if (currentLine.length > 0) {
+    pushLine();
+  }
+
+  if (lines.length === 0) {
+    lines.push([]);
+  }
+
+  return lines;
+};
+
+const renderRichTextBlock = (
+  doc: jsPDF,
+  text: string,
+  startX: number,
+  startY: number,
+  options?: { maxWidth?: number; lineHeight?: number; prefix?: string },
+) => {
+  const maxWidth = options?.maxWidth ?? 180;
+  const lineHeight = options?.lineHeight ?? 5.5;
+  const baseFontSize = typeof doc.getFontSize === "function" ? doc.getFontSize() : 11;
+  let cursorY = startY;
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(baseFontSize);
+
+  const lines = text.split(/\r?\n/);
+
+  lines.forEach((rawLine, index) => {
+    const trimmed = rawLine.trim();
+    const isBullet = trimmed.startsWith("- ") || trimmed.startsWith("* ");
+    const content = isBullet ? rawLine.replace(/^\s*[-*]\s+/, "") : rawLine;
+    const prefix = options?.prefix && index === 0 ? options.prefix : undefined;
+
+    if (!content.trim()) {
+      cursorY += lineHeight;
+      return;
+    }
+
+    const segments = parseSegments(content);
+    const bulletIndent = isBullet ? 6 : 0;
+    const prefixWidth = prefix ? measureTextWidth(doc, prefix, "bold", baseFontSize) + 1.5 : 0;
+
+    const indent = bulletIndent || prefixWidth;
+    const availableWidth = Math.max(maxWidth - indent, 20);
+    const laidLines = layoutSegments(doc, segments, availableWidth, baseFontSize);
+
+    laidLines.forEach((lineSegments, lineIndex) => {
+      let cursorX = startX + indent;
+      if (isBullet && lineIndex === 0) {
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(baseFontSize);
+        doc.text("•", startX, cursorY);
+      }
+      if (prefix && lineIndex === 0) {
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(baseFontSize);
+        doc.text(prefix, startX, cursorY);
+      }
+
+      lineSegments.forEach((segment) => {
+        doc.setFont("helvetica", fontForStyle(segment.style));
+        doc.setFontSize(baseFontSize);
+        doc.text(segment.text, cursorX, cursorY);
+        cursorX += measureTextWidth(doc, segment.text, segment.style, baseFontSize);
+      });
+
+      cursorY += lineHeight;
+    });
+  });
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(baseFontSize);
+  return cursorY;
 };
 
 export const generateProposalPDF = async (
@@ -276,8 +527,8 @@ export const generateProposalPDF = async (
   // Ano vertical + divisor
   doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(34);
-  doc.text(year, 66, 120, { align: "center", angle: 90 });
+  doc.setFontSize(40);
+  doc.text(year, 66, 128, { align: "center", angle: 90 });
   doc.setDrawColor(255, 255, 255);
   doc.setLineWidth(0.8);
   doc.line(70, 95, 70, 165);
@@ -290,17 +541,19 @@ export const generateProposalPDF = async (
   doc.text("C O M E R C I A L", 90, 150);
 
   doc.setTextColor(255, 255, 255);
-  doc.setFontSize(12);
+  doc.setFontSize(18);
   const subtitle = `A/C: ${data.clientName} - ${data.companyName} `;
   doc.text(subtitle, 90, 166);
   if (proposalIdentifier) {
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(18);
+    doc.setFontSize(12);
     doc.text(`PROPOSTA Nº ${proposalIdentifier}`, 90, 176);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(12);
   }
   if (proposalInfoLine) {
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(12);
     doc.text(proposalInfoLine, 90, 184);
   }
 
@@ -323,6 +576,15 @@ export const generateProposalPDF = async (
 
   let y = 50;
 
+  const renderSectionContent = (value: string | undefined, spacing: number) => {
+    if (value && value.trim()) {
+      y = renderRichTextBlock(doc, value, 20, y, { maxWidth: 180 });
+      y += spacing;
+    } else {
+      y += spacing;
+    }
+  };
+
   // Seção 1
   doc.setFillColor(accent[0], accent[1], accent[2]);
   doc.circle(10, y - 3, 3, "F");
@@ -337,9 +599,7 @@ export const generateProposalPDF = async (
   doc.setFont("helvetica", "normal");
   doc.setFontSize(11);
   doc.setTextColor(text[0], text[1], text[2]);
-  const intro = doc.splitTextToSize(data.proposalTexts.introductionText, 180);
-  doc.text(intro, 20, y);
-  y += intro.length * 5.5 + 10;
+  renderSectionContent(data.proposalTexts.introductionText, 10);
 
   // Seção 2
   doc.setFillColor(accent[0], accent[1], accent[2]);
@@ -355,9 +615,7 @@ export const generateProposalPDF = async (
   doc.setFont("helvetica", "normal");
   doc.setFontSize(11);
   doc.setTextColor(text[0], text[1], text[2]);
-  const objective = doc.splitTextToSize(data.proposalTexts.objectiveText, 180);
-  doc.text(objective, 20, y);
-  y += objective.length * 5.5 + 10;
+  renderSectionContent(data.proposalTexts.objectiveText, 10);
 
   drawFooter();
 
@@ -455,13 +713,7 @@ export const generateProposalPDF = async (
   doc.setFont("helvetica", "normal");
   doc.setFontSize(11);
   doc.setTextColor(text[0], text[1], text[2]);
-  const servicesDetail = doc.splitTextToSize(data.proposalTexts.servicesText || "", 180);
-  if (servicesDetail.length) {
-    doc.text(servicesDetail, 20, y);
-    y += servicesDetail.length * 5.5 + 10;
-  } else {
-    y += 10;
-  }
+  renderSectionContent(data.proposalTexts.servicesText || "", 10);
 
   // Seção 5
   doc.setFillColor(accent[0], accent[1], accent[2]);
@@ -477,13 +729,7 @@ export const generateProposalPDF = async (
   doc.setFont("helvetica", "normal");
   doc.setFontSize(11);
   doc.setTextColor(text[0], text[1], text[2]);
-  const whyDetail = doc.splitTextToSize(data.proposalTexts.whyText || "", 180);
-  if (whyDetail.length) {
-    doc.text(whyDetail, 20, y);
-    y += whyDetail.length * 5.5 + 6;
-  } else {
-    y += 6;
-  }
+  renderSectionContent(data.proposalTexts.whyText || "", 4);
 
   if (data.observations) {
     doc.setFont("helvetica", "bold");
@@ -494,8 +740,17 @@ export const generateProposalPDF = async (
     doc.setFont("helvetica", "normal");
     doc.setFontSize(11);
     doc.setTextColor(text[0], text[1], text[2]);
-    const observationText = doc.splitTextToSize(data.observations, 180);
-    doc.text(observationText, 20, y);
+    const observationItems = data.observations
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0);
+    observationItems.forEach((item, index) => {
+      y = renderRichTextBlock(doc, item, 20, y, {
+        maxWidth: 180,
+        prefix: `${index + 1}. `,
+      });
+      y += 2;
+    });
   }
 
   drawFooter();
