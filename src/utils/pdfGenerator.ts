@@ -739,8 +739,13 @@ export const generateProposalPDF = async (
 
     y = 50;
 
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(12);
+
+  doc.setFillColor(accent[0], accent[1], accent[2]);
+  doc.circle(10, y - 3, 3, "F");
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(11);
+  doc.setTextColor(255, 255, 255);
+  doc.text("6", 8.3, y - 1);
     doc.setTextColor(primary[0], primary[1], primary[2]);
     doc.text("Observações", 20, y);
     y += 6;
@@ -754,7 +759,7 @@ export const generateProposalPDF = async (
     observationItems.forEach((item, index) => {
       y = renderRichTextBlock(doc, item, 20, y, {
         maxWidth: 180,
-        prefix: `${index + 1}. `,
+        prefix: ``,
       });
       y += 2;
     });
