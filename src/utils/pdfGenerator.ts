@@ -48,7 +48,6 @@ export const generateProposalPDF = async (
   const year = new Date(data.date).getFullYear().toString();
   const formattedDate = new Date(data.date).toLocaleDateString("pt-BR");
   const proposalIdentifier = data.proposalNumber || "";
-  const headerProposalInfo = proposalIdentifier ? `Nº ${proposalIdentifier}` : "";
   const proposalInfoLine = formattedDate;
 
   const drawContentHeader = () => {
@@ -62,22 +61,16 @@ export const generateProposalPDF = async (
     doc.setFont("helvetica", "normal");
     doc.setFontSize(12);
     doc.text("Prestação de Serviço de Tecnologia", 15, 25);
-    if (headerProposalInfo) {
-      doc.setFontSize(12);
-      doc.text(headerProposalInfo, 195, 16, { align: "right" });
-    }
   };
 
   const drawFooter = () => {
-    // Colunas em uma linha: telefone | endereço (centro, até 2 linhas) | site (fonte reduzida)
+    // Colunas em uma linha: telefone | endereço (centro) | site
     const footerY = 262; // sobe o rodapé para evitar corte
     const iconSize = 5;
     const pageWidth = 210;
     const margin = 10;
     const colGap = 6;
-    const defaultFontSize = 10;
-    const websiteFontSize = 9; // fonte reduzida para o site
-    const lineHeight = 5;
+    const fontSize = 10;
 
     // calculo das colunas (3 colunas, espaço interno entre margens)
     const totalInner = pageWidth - margin * 2;
@@ -90,12 +83,13 @@ export const generateProposalPDF = async (
     doc.setLineWidth(0.4);
     doc.line(margin, footerY, pageWidth - margin, footerY);
 
-    // Helper: truncar com base em fontSize e largura
-    const truncateToWidth = (rawText: string, maxW: number, fontSize: number) => {
+    // helper para truncar texto para caber numa largura (considerando fontSize atual)
+    const truncateToWidth = (rawText: string, maxW: number) => {
       doc.setFont("helvetica", "normal");
       doc.setFontSize(fontSize);
       if (doc.getTextWidth(rawText) <= maxW) return rawText;
       let t = rawText;
+      // deixa espaço para "..." ao medir
       while (t.length > 0 && doc.getTextWidth(t + "...") > maxW) {
         t = t.slice(0, -1);
       }
@@ -109,7 +103,7 @@ export const generateProposalPDF = async (
     const phoneText = data.companyConfig.phone || "(31) 99305-4200";
     const leftIconX = leftStart + 2;
     const leftTextMaxW = colWidth - (iconSize + 4);
-    const phoneTextTrunc = truncateToWidth(phoneText, leftTextMaxW, defaultFontSize);
+    const phoneTextTrunc = truncateToWidth(phoneText, leftTextMaxW);
     const phoneTextX = leftIconX + iconSize + 2;
 
     try {
@@ -117,71 +111,45 @@ export const generateProposalPDF = async (
     } catch (e) {
       /* no-op */
     }
-    doc.setFontSize(defaultFontSize);
+    doc.setFontSize(fontSize);
     doc.setTextColor(text[0], text[1], text[2]);
     doc.text(phoneTextTrunc, phoneTextX, baseTextY);
 
-    // ===== Endereço (coluna central) - até 2 linhas, não abreviar a primeira, quebrar em 2 linhas se necessário =====
+    // ===== Endereço (coluna central) - centralizado dentro da coluna =====
     const addressText = data.companyConfig.address || "Rua Antônio de Albuquerque, 330 - Sala 901, BH/MG";
     const centerIconXCandidate = centerStart + 2;
     const centerTextMaxW = colWidth - (iconSize + 6);
-
-    // gerar linhas com splitTextToSize usando font padrão
-    doc.setFontSize(defaultFontSize);
-    const rawAddressLines = doc.splitTextToSize(addressText, centerTextMaxW);
-
-    // limitar para até 2 linhas: se houver mais, concatenar o resto na 2ª linha com "..."
-    let addressLines: string[] = [];
-    if (rawAddressLines.length <= 2) {
-      addressLines = rawAddressLines;
-    } else {
-      // manter primeira linha e montar segunda juntando o restante e truncando com "..."
-      const second = rawAddressLines.slice(1).join(" ");
-      const secondTrunc = truncateToWidth(second, centerTextMaxW, defaultFontSize);
-      addressLines = [rawAddressLines[0], secondTrunc];
-    }
-
-    // medir largura máxima das linhas para centralizar icon+texto
-    const maxLineWidth = Math.max(...addressLines.map((l) => doc.getTextWidth(l)));
-    const combinedW = iconSize + 2 + maxLineWidth;
+    doc.setFontSize(fontSize);
+    const addressTextTrunc = truncateToWidth(addressText, centerTextMaxW);
+    // medir largura do texto truncado para centralizar icon+gap+texto
+    const textWAddress = doc.getTextWidth(addressTextTrunc);
+    const combinedW = iconSize + 2 + textWAddress;
+    // startX para centralizar o bloco dentro da coluna central
     const centerBlockStartX = centerStart + (colWidth - combinedW) / 2;
-
     try {
       doc.addImage(locationIcon, "PNG", centerBlockStartX, footerY + 6, iconSize, iconSize);
     } catch (e) {
       /* no-op */
     }
     const addressTextX = centerBlockStartX + iconSize + 2;
-    addressLines.forEach((line, i) => {
-      doc.text(line, addressTextX, baseTextY + i * lineHeight);
-    });
+    doc.text(addressTextTrunc, addressTextX, baseTextY);
 
-    // ===== Website (coluna direita) - fonte reduzida, truncar se preciso, alinhado à direita da coluna =====
+    // ===== Website (coluna direita) - alinhado à direita da coluna =====
     const websiteText = (data.companyConfig as any).website || "www.quantumtecnologia.com.br";
     const rightTextMaxW = colWidth - (iconSize + 6);
-
-    // truncar linha única com fonte reduzida
-    const websiteTextTrunc = truncateToWidth(websiteText, rightTextMaxW, websiteFontSize);
-
-    doc.setFontSize(websiteFontSize);
+    const websiteTextTrunc = truncateToWidth(websiteText, rightTextMaxW);
+    doc.setFontSize(fontSize);
     const textWWebsite = doc.getTextWidth(websiteTextTrunc);
-
     // posição direita do texto dentro da coluna
     const rightColumnRightX = rightStart + colWidth - 2;
     const websiteTextX = rightColumnRightX;
-    // calcular posição do ícone para que fique à esquerda do texto, com gap de 2mm
     const iconForWebsiteX = websiteTextX - textWWebsite - 2 - iconSize;
-
     try {
       doc.addImage(globeIcon, "PNG", iconForWebsiteX, footerY + 6, iconSize, iconSize);
     } catch (e) {
       /* no-op */
     }
-    // desenhar texto alinhado à direita
     doc.text(websiteTextTrunc, websiteTextX, baseTextY, { align: "right" });
-
-    // reset font para segurança
-    doc.setFontSize(defaultFontSize);
   };
 
   // ========= CAPA (modelo anexo) =========
