@@ -4,6 +4,12 @@ export const recordedTextEntries = textEntries;
 
 class MockJsPDF {
   lastAutoTable: any;
+  internal = {
+    pageSize: {
+      getWidth: () => 420,
+      getHeight: () => 297,
+    },
+  };
 
   setFillColor() {}
   rect() {}
@@ -11,6 +17,9 @@ class MockJsPDF {
   setFont() {}
   setFontSize() {}
   setTextColor() {}
+  getTextWidth(text: string) {
+    return String(text).length;
+  }
   text(content: any, x: number, y: number) {
     const lines = Array.isArray(content) ? content : [content];
     lines.forEach((line) => {
