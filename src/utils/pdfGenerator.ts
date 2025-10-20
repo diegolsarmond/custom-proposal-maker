@@ -97,6 +97,10 @@ const parseSegments = (text: string, current: SegmentStyle = "normal"): Formatte
         index = end + 2;
         continue;
       }
+
+      segments.push({ text: "**", style: current });
+      index += 2;
+      continue;
     }
 
     if (text[index] === "_") {
@@ -108,6 +112,10 @@ const parseSegments = (text: string, current: SegmentStyle = "normal"): Formatte
         index = end + 1;
         continue;
       }
+
+      segments.push({ text: "_", style: current });
+      index += 1;
+      continue;
     }
 
     let nextIndex = text.length;
