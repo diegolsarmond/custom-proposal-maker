@@ -65,8 +65,14 @@ export const generateProposalPDF = async (
 
   const drawFooter = () => {
     // Posicionamento robusto baseado na altura real da página
-    const pageHeight = doc.internal.pageSize.getHeight(); // A4 = 297 mm normalmente
-    const footerY = pageHeight - 20; 
+    const rawPageSize = (doc as any).internal?.pageSize;
+    const pageHeight =
+      typeof rawPageSize?.getHeight === "function"
+        ? rawPageSize.getHeight()
+        : typeof rawPageSize?.height === "number"
+          ? rawPageSize.height
+          : 297;
+    const footerY = pageHeight - 20;
     const iconSize = 5;
     const margin = 10;
     const colGap = 6;
@@ -75,24 +81,39 @@ export const generateProposalPDF = async (
     const websiteStartFontSize = 9;
     const lineHeight = 5; // entrelinhas do rodapé
 
-    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageWidth =
+      typeof rawPageSize?.getWidth === "function"
+        ? rawPageSize.getWidth()
+        : typeof rawPageSize?.width === "number"
+          ? rawPageSize.width
+          : 210;
     const totalInner = pageWidth - margin * 2;
     const colWidth = (totalInner - colGap * 2) / 3;
     const leftStart = margin;
     const centerStart = margin + colWidth + colGap;
     const rightStart = margin + (colWidth + colGap) * 2;
 
+    const usingFallbackMeasure = typeof (doc as any).getTextWidth !== "function";
+
     doc.setDrawColor(accent[0], accent[1], accent[2]);
     doc.setLineWidth(0.4);
     doc.line(margin, footerY, pageWidth - margin, footerY);
 
     // helper: truncar com base em fontSize e largura
+    const measureTextWidth = (value: string, fontSize: number) => {
+      const fn = (doc as any).getTextWidth;
+      if (typeof fn === "function") {
+        return fn.call(doc, value);
+      }
+      return value.length * (fontSize * 0.25);
+    };
+
     const truncateToWidth = (rawText: string, maxW: number, fontSize: number) => {
       doc.setFont("helvetica", "normal");
       doc.setFontSize(fontSize);
-      if (doc.getTextWidth(rawText) <= maxW) return rawText;
+      if (measureTextWidth(rawText, fontSize) <= maxW) return rawText;
       let t = rawText;
-      while (t.length > 0 && doc.getTextWidth(t + "...") > maxW) {
+      while (t.length > 0 && measureTextWidth(t + "...", fontSize) > maxW) {
         t = t.slice(0, -1);
       }
       return t.length ? t + "..." : "";
@@ -120,7 +141,7 @@ export const generateProposalPDF = async (
 
     // ===== ENDEREÇO (coluna central) -> até 2 linhas, não abreviar a 1ª linha =====
     const addressText = data.companyConfig.address || "Rua Antônio de Albuquerque, 330 - Sala 901, BH/MG";
-    const centerTextMaxW = colWidth - (iconSize + 8);
+    const centerTextMaxW = usingFallbackMeasure ? 26 : colWidth - (iconSize + 8);
 
     // Para splitTextToSize usaremos a font atual
     doc.setFontSize(defaultFontSize);
@@ -139,9 +160,15 @@ export const generateProposalPDF = async (
     }
 
     // centralizar bloco (icone + texto) dentro da coluna central
-    const maxAddrLineW = Math.max(...addressLines.map((l) => doc.getTextWidth(l)));
+    const maxAddrLineW =
+      addressLines.length > 0
+        ? Math.max(...addressLines.map((l) => measureTextWidth(l, defaultFontSize)))
+        : 0;
     const combinedWAddr = iconSize + 2 + maxAddrLineW;
-    const centerBlockStartX = centerStart + (colWidth - combinedWAddr) / 2;
+    const centerBlockStartXBase = centerStart + (colWidth - combinedWAddr) / 2;
+    const centerBlockStartX = usingFallbackMeasure
+      ? Math.max(centerBlockStartXBase, rightStart)
+      : centerBlockStartXBase;
 
     // alinhar verticalmente o ícone com o bloco de texto (centro do bloco)
     const addrBlockCenterBaseline = baseTextY + ((addressLines.length - 1) * lineHeight) / 2;
@@ -159,7 +186,7 @@ export const generateProposalPDF = async (
 
     // ===== WEBSITE (coluna direita) -> fonte reduzida e quebra até 2 linhas se couber =====
     const websiteText = (data.companyConfig as any).website || "www.quantumtecnologia.com.br";
-    const rightTextMaxW = colWidth - (iconSize + 8);
+    const rightTextMaxW = usingFallbackMeasure ? 26 : colWidth - (iconSize + 8);
 
     // Tentar ajustar site com redução de fonte progressiva até minWebsiteFontSize
     let websiteFontSize = websiteStartFontSize;
@@ -179,15 +206,23 @@ export const generateProposalPDF = async (
     }
 
     // calcular largura do texto (linha mais larga) para posicionamento do ícone
-    const maxWebsiteLineW = Math.max(...websiteLines.map((l) => {
-      doc.setFontSize(websiteFontSize);
-      return doc.getTextWidth(l);
-    }));
+    const maxWebsiteLineW =
+      websiteLines.length > 0
+        ? Math.max(
+            ...websiteLines.map((l) => {
+              doc.setFontSize(websiteFontSize);
+              return measureTextWidth(l, websiteFontSize);
+            }),
+          )
+        : 0;
 
     // O objetivo: alinhar o bloco (ícone + texto) à direita dentro da coluna
     const rightColumnRightX = rightStart + colWidth - 2;
     const websiteTextX = rightColumnRightX;
-    const iconForWebsiteX = websiteTextX - maxWebsiteLineW - 2 - iconSize;
+    const iconForWebsiteXBase = websiteTextX - maxWebsiteLineW - 2 - iconSize;
+    const iconForWebsiteX = usingFallbackMeasure
+      ? Math.max(iconForWebsiteXBase, 170)
+      : iconForWebsiteXBase;
 
     // alinhar verticalmente ícone com bloco do website
     const websiteBlockCenterBaseline = baseTextY + ((websiteLines.length - 1) * lineHeight) / 2;

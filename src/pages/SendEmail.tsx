@@ -379,22 +379,25 @@ export default function SendEmail() {
       const token = sessionData.session?.access_token;
       const baseUrl = import.meta.env.VITE_BACKEND_URL || "";
       const normalizedBaseUrl = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
+      const formData = new FormData();
+      formData.append("from", fromEmail);
+      formData.append("to", toEmail);
+      formData.append("subject", subject);
+      formData.append("html", body);
+
+      attachments.forEach((att) => {
+        formData.append("attachments", att.file, att.file.name);
+      });
+
+      const headers: Record<string, string> = {};
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+
       const response = await fetch(`${normalizedBaseUrl}/emails/send`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify({
-          from: fromEmail,
-          to: toEmail,
-          subject: subject,
-          html: body,
-          attachments: attachments.map((att) => ({
-            filename: att.file.name,
-            content: att.base64,
-          })),
-        }),
+        headers,
+        body: formData,
       });
 
       const data = await response.json();
