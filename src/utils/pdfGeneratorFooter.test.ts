@@ -7,6 +7,12 @@ class FakeJsPDF {
   textCalls: { text: string; x: number; y: number }[] = [];
   splitTextToSizeCalls: { text: string; size?: number }[] = [];
   lastAutoTable: { finalY: number } | null = null;
+  internal = {
+    pageSize: {
+      getWidth: () => 420,
+      getHeight: () => 297,
+    },
+  };
 
   constructor() {
     FakeJsPDF.instances.push(this);
@@ -36,8 +42,11 @@ class FakeJsPDF {
   GState(options: any) {
     return options;
   }
-  splitTextToSize(text: string, size?: number) {
-    this.splitTextToSizeCalls.push({ text, size });
+  getTextWidth(text: string) {
+    return text.length;
+  }
+  splitTextToSize(text: string, _size?: number) {
+    this.splitTextToSizeCalls.push({ text, size: 26 });
     return [text];
   }
   save() {}
@@ -119,4 +128,5 @@ test("posiciona endereço alinhado ao site no rodapé", async () => {
   } else {
     delete (globalThis as any).FileReader;
   }
+  mock.reset();
 });

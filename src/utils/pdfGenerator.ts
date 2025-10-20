@@ -324,33 +324,6 @@ export const generateProposalPDF = async (
   doc.text(objective, 20, y);
   y += objective.length * 5.5 + 10;
 
-  // Seção 3
-  doc.setFillColor(accent[0], accent[1], accent[2]);
-  doc.circle(10, y - 3, 3, "F");
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(11);
-  doc.setTextColor(255, 255, 255);
-  doc.text("3", 8.3, y - 1);
-  doc.setTextColor(primary[0], primary[1], primary[2]);
-  doc.setFontSize(13);
-  doc.text("Serviços", 20, y);
-  y += 8;
-
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(11);
-  doc.setTextColor(text[0], text[1], text[2]);
-  const serviceTopics = [
-    "Automação total",
-    "Redução de custos",
-    "Decisões inteligentes",
-    "Integração com outras plataformas",
-  ];
-  serviceTopics.forEach((topic) => {
-    doc.text(`• ${topic}`, 20, y);
-    y += 6;
-  });
-  y += 6;
-
   drawFooter();
 
   // ========= PÁGINA 3 – CONTEÚDO =========
@@ -359,13 +332,13 @@ export const generateProposalPDF = async (
 
   y = 50;
 
-  // Seção 4
+  // Seção 3
   doc.setFillColor(accent[0], accent[1], accent[2]);
   doc.circle(10, y - 3, 3, "F");
   doc.setFont("helvetica", "bold");
   doc.setFontSize(11);
   doc.setTextColor(255, 255, 255);
-  doc.text("4", 8.3, y - 1);
+  doc.text("3", 8.3, y - 1);
   doc.setTextColor(primary[0], primary[1], primary[2]);
   doc.setFontSize(13);
   doc.text("Planos e Investimento", 20, y);
@@ -433,13 +406,13 @@ export const generateProposalPDF = async (
 
   y = 50;
 
-  // Seção 5
+  // Seção 4
   doc.setFillColor(accent[0], accent[1], accent[2]);
   doc.circle(10, y - 3, 3, "F");
   doc.setFont("helvetica", "bold");
   doc.setFontSize(11);
   doc.setTextColor(255, 255, 255);
-  doc.text("5", 8.3, y - 1);
+  doc.text("4", 8.3, y - 1);
   doc.setTextColor(primary[0], primary[1], primary[2]);
   doc.setFontSize(13);
   doc.text("Serviços Atribuídos", 20, y);
@@ -455,13 +428,13 @@ export const generateProposalPDF = async (
     y += 10;
   }
 
-  // Seção 6
+  // Seção 5
   doc.setFillColor(accent[0], accent[1], accent[2]);
   doc.circle(10, y - 3, 3, "F");
   doc.setFont("helvetica", "bold");
   doc.setFontSize(11);
   doc.setTextColor(255, 255, 255);
-  doc.text("6", 8.3, y - 1);
+  doc.text("5", 8.3, y - 1);
   doc.setTextColor(primary[0], primary[1], primary[2]);
   doc.setFontSize(13);
   doc.text("Por que contratar?", 20, y);
