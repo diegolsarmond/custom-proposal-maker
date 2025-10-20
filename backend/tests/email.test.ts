@@ -25,7 +25,7 @@ test('envio bem-sucedido retorna 200 e registra histórico como enviado', async 
 
   const fetchMock = mock.fn(async () => ({
     ok: true,
-    json: async () => ({ id: 'resend-123' }),
+    text: async () => JSON.stringify({ id: 'resend-123' }),
   }));
 
   const handler = createSendEmailHandler({
@@ -73,7 +73,7 @@ test('falha ao enviar retorna 500 e registra histórico de erro', async () => {
 
   const fetchMock = mock.fn(async () => ({
     ok: false,
-    json: async () => ({ message: 'Erro Resend' }),
+    text: async () => JSON.stringify({ message: 'Erro Resend' }),
   }));
 
   const handler = createSendEmailHandler({
@@ -102,4 +102,53 @@ test('falha ao enviar retorna 500 e registra histórico de erro', async () => {
   assert.equal(insertCalls.length, 1);
   assert.equal(insertCalls[0].status, 'failed');
   assert.equal(insertCalls[0].sent_by, 'user-2');
+});
+
+test('falha com resposta html retorna mensagem sanitizada', async () => {
+  const insertCalls: any[] = [];
+  const supabaseMock = {
+    auth: {
+      getUser: mock.fn(async () => ({ data: { user: { id: 'user-3' } } })),
+    },
+    from: mock.fn(() => ({
+      insert: mock.fn(async (payload: any) => {
+        insertCalls.push(payload);
+        return { error: null };
+      }),
+    })),
+  };
+
+  const fetchMock = mock.fn(async () => ({
+    ok: false,
+    text: async () =>
+      '<html><body><h1>404 Not Found</h1><p>nginx/1.29.2</p></body></html>',
+  }));
+
+  const handler = createSendEmailHandler({
+    createSupabaseClient: () => supabaseMock as any,
+    fetchImpl: fetchMock as any,
+    resendApiKey: 'resend-test-key',
+  });
+
+  const headers: IncomingHttpHeaders = { authorization: 'Bearer token-ghi' };
+
+  const result = await handler(
+    {
+      from: 'origem@exemplo.com',
+      to: 'destino@exemplo.com',
+      subject: 'Assunto',
+      html: '<p>Corpo</p>',
+    },
+    headers,
+  );
+
+  assert.equal(result.status, 500);
+  assert.equal((result.body as any).success, false);
+  assert.equal((result.body as any).error, '404 Not Found nginx/1.29.2');
+  assert.equal(fetchMock.mock.calls.length, 1);
+  assert.equal(supabaseMock.from.mock.calls.length, 1);
+  assert.equal(insertCalls.length, 1);
+  assert.equal(insertCalls[0].status, 'failed');
+  assert.equal(insertCalls[0].error_message, '404 Not Found nginx/1.29.2');
+  assert.equal(insertCalls[0].sent_by, 'user-3');
 });
