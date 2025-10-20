@@ -16,6 +16,8 @@ server {
         set $email_backend_origin "http://$email_backend_origin";
     }
 
+    resolver 127.0.0.11 ipv6=off;
+
     location /emails/ {
         proxy_pass $email_backend_origin;
         proxy_set_header Host $host;
