@@ -2,18 +2,6 @@ import { createServer, type IncomingMessage } from 'node:http';
 import { sendEmailHandler, corsHeaders } from './routes/email.js';
 import type { SendEmailRequest } from './routes/email.js';
 
-const requiredEnv = ['SUPABASE_URL', 'SUPABASE_SERVICE_ROLE_KEY'];
-
-for (const key of requiredEnv) {
-  if (!process.env[key]) {
-    throw new Error(`${key} não configurada`);
-  }
-}
-
-if (!process.env.RESEND_API_KEY && !process.env.SMTP_PASSWORD) {
-  throw new Error('RESEND_API_KEY ou SMTP_PASSWORD não configurada');
-}
-
 const collectRequestBody = async (req: IncomingMessage): Promise<Buffer> => {
   const chunks: Uint8Array[] = [];
   for await (const chunk of req) {

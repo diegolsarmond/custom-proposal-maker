@@ -120,10 +120,6 @@ export const createSendEmailHandler = (
     overrides.resendApiKey ?? process.env.RESEND_API_KEY ?? process.env.SMTP_PASSWORD ?? '';
   const fromName = overrides.fromName ?? process.env.SMTP_FROM_NAME ?? 'Quantum Tecnologia';
 
-  if (!resendApiKey) {
-    throw new Error('RESEND_API_KEY não configurada');
-  }
-
   return async (body: SendEmailRequest, headers: IncomingHttpHeaders): Promise<HandlerResult> => {
     const validationError = validateRequest(body);
     if (validationError) {
@@ -137,11 +133,28 @@ export const createSendEmailHandler = (
       };
     }
 
-    const supabase = createSupabaseClient();
+    if (!resendApiKey) {
+      return {
+        status: 500,
+        body: { success: false, error: 'Serviço de email não configurado' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...corsHeaders,
+        },
+      };
+    }
+
+    let supabase: SupabaseClient | null = null;
+    try {
+      supabase = createSupabaseClient();
+    } catch (error) {
+      console.error('Erro ao criar cliente Supabase:', error);
+    }
+
     const token = parseAuthorization(headers);
     let userId: string | null = null;
 
-    if (token) {
+    if (token && supabase) {
       try {
         const { data } = await supabase.auth.getUser(token);
         userId = data.user?.id ?? null;
@@ -177,21 +190,23 @@ export const createSendEmailHandler = (
         throw new Error('Resposta inválida do serviço de email');
       }
 
-      try {
-        await supabase
-          .from('sent_emails')
-          .insert({
-            from_email: body.from,
-            to_email: body.to,
-            subject: body.subject,
-            html_body: body.html,
-            attachments_count: body.attachments?.length ?? 0,
-            status: 'sent',
-            resend_id: resendId,
-            sent_by: userId,
-          });
-      } catch (error) {
-        console.error('Erro ao salvar histórico:', error);
+      if (supabase) {
+        try {
+          await supabase
+            .from('sent_emails')
+            .insert({
+              from_email: body.from,
+              to_email: body.to,
+              subject: body.subject,
+              html_body: body.html,
+              attachments_count: body.attachments?.length ?? 0,
+              status: 'sent',
+              resend_id: resendId,
+              sent_by: userId,
+            });
+        } catch (error) {
+          console.error('Erro ao salvar histórico:', error);
+        }
       }
 
       return {
@@ -205,7 +220,7 @@ export const createSendEmailHandler = (
     } catch (error: any) {
       console.error('Erro ao enviar email:', error);
 
-      if (userId) {
+      if (userId && supabase) {
         try {
           await supabase
             .from('sent_emails')
