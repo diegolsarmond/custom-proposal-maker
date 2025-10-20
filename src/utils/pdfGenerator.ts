@@ -66,7 +66,7 @@ export const generateProposalPDF = async (
   const drawFooter = () => {
     // Posicionamento robusto baseado na altura real da página
     const pageHeight = doc.internal.pageSize.getHeight(); // A4 = 297 mm normalmente
-    const footerY = pageHeight - 40; // sobe o rodapé para uma posição segura (evita corte)
+    const footerY = pageHeight - 20; 
     const iconSize = 5;
     const margin = 10;
     const colGap = 6;
