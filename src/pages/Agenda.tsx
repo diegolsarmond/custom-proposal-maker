@@ -44,6 +44,11 @@ import { DayPicker } from "react-day-picker";
 import "react-day-picker/dist/style.css";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import {
+  createEvent,
+  updateEvent,
+  cancelEvent,
+} from "@/integrations/googleCalendar";
 
 interface ClientOption {
   id: string;
@@ -58,6 +63,7 @@ interface Appointment {
   type: string;
   description: string;
   status: string;
+  google_event_id?: string | null;
   clients: {
     id: string;
     name: string;
@@ -181,7 +187,7 @@ export default function Agenda() {
     }
 
     if (editingAppointment) {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("appointments")
         .update({
           client_id: formData.client_id,
@@ -190,31 +196,94 @@ export default function Agenda() {
           description: formData.description,
           status: formData.status,
         })
-        .eq("id", editingAppointment.id);
+        .eq("id", editingAppointment.id)
+        .select("*, clients (id, name, company_name)")
+        .single();
 
-      if (error) {
+      if (error || !data) {
         toast.error("Erro ao atualizar agendamento");
       } else {
+        let googleEventId = data.google_event_id;
+
+        try {
+          const updatedId = googleEventId
+            ? await updateEvent(googleEventId, {
+                scheduled_at: data.scheduled_at,
+                type: data.type,
+                description: data.description,
+                clients: data.clients,
+              })
+            : await createEvent({
+                scheduled_at: data.scheduled_at,
+                type: data.type,
+                description: data.description,
+                clients: data.clients,
+              });
+
+          if (updatedId && updatedId !== googleEventId) {
+            googleEventId = updatedId;
+          }
+        } catch (syncError) {
+          console.error(syncError);
+          toast.error("Erro ao sincronizar com o Google Calendar");
+        }
+
+        if (googleEventId && googleEventId !== data.google_event_id) {
+          await supabase
+            .from("appointments")
+            .update({ google_event_id: googleEventId })
+            .eq("id", data.id);
+        }
+
         toast.success("Agendamento atualizado com sucesso!");
         fetchAppointments();
         fetchCalendarAppointments();
         handleClose();
       }
     } else {
-      const { error } = await supabase.from("appointments").insert([
-        {
-          client_id: formData.client_id,
-          scheduled_at: formData.scheduled_at,
-          type: formData.type,
-          description: formData.description,
-          status: formData.status,
-          created_by: user.id,
-        },
-      ]);
+      const { data, error } = await supabase
+        .from("appointments")
+        .insert([
+          {
+            client_id: formData.client_id,
+            scheduled_at: formData.scheduled_at,
+            type: formData.type,
+            description: formData.description,
+            status: formData.status,
+            created_by: user.id,
+          },
+        ])
+        .select("*, clients (id, name, company_name)")
+        .single();
 
-      if (error) {
+      if (error || !data) {
         toast.error("Erro ao criar agendamento");
       } else {
+        let googleEventId = data.google_event_id;
+
+        try {
+          const createdId = await createEvent({
+            scheduled_at: data.scheduled_at,
+            type: data.type,
+            description: data.description,
+            clients: data.clients,
+          });
+
+          if (createdId) {
+            googleEventId = createdId;
+          }
+        } catch (syncError) {
+          console.error(syncError);
+          toast.error("Erro ao sincronizar com o Google Calendar");
+        }
+
+        if (googleEventId && googleEventId !== data.google_event_id) {
+          await supabase
+            .from("appointments")
+            .update({ google_event_id: googleEventId })
+            .eq("id", data.id);
+        }
+
         toast.success("Agendamento criado com sucesso!");
         fetchAppointments();
         fetchCalendarAppointments();
@@ -257,6 +326,14 @@ export default function Agenda() {
       toast.error("Erro ao atualizar status");
     } else {
       toast.success("Status atualizado");
+      if (status === "cancelado" && appointment.google_event_id) {
+        try {
+          await cancelEvent(appointment.google_event_id);
+        } catch (syncError) {
+          console.error(syncError);
+          toast.error("Erro ao sincronizar cancelamento no Google Calendar");
+        }
+      }
       fetchAppointments();
       fetchCalendarAppointments();
     }
