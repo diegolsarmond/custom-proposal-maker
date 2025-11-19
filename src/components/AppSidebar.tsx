@@ -48,6 +48,11 @@ const menuItems = [
     icon: FileText,
   },
   {
+    title: "Contratos",
+    url: "/contracts",
+    icon: FileSignature,
+  },
+  {
     title: "Produtos",
     url: "/products",
     icon: Package,
