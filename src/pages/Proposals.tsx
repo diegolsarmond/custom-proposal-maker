@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
@@ -11,10 +11,20 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Plus, FileText, Trash2, ExternalLink, Pencil } from "lucide-react";
 import { generateProposalPDF } from "@/utils/pdfGenerator";
 import { resolveProposalNumber } from "@/utils/resolveProposalNumber";
+import { formatProposalPdfFileName } from "@/utils/proposalFileName";
+import {
+  getStoredCertificateInfo,
+  hasStoredCertificate,
+  signPdfWithPfx,
+  storePfxCertificate,
+} from "@/lib/signature/pfx";
 
 interface Proposal {
   id: string;
@@ -34,6 +44,12 @@ interface Proposal {
 export default function Proposals() {
   const [proposals, setProposals] = useState<Proposal[]>([]);
   const [loading, setLoading] = useState(true);
+  const [certificateFile, setCertificateFile] = useState<File | null>(null);
+  const [certificatePassword, setCertificatePassword] = useState("");
+  const [certificateReady, setCertificateReady] = useState(hasStoredCertificate());
+  const [certificateInfo, setCertificateInfo] = useState(getStoredCertificateInfo());
+  const [signedProposals, setSignedProposals] = useState<Record<string, boolean>>({});
+  const [signing, setSigning] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -68,6 +84,34 @@ export default function Proposals() {
     setLoading(false);
   };
 
+  const handleCertificateChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setCertificateFile(file);
+    }
+  };
+
+  const handleStoreCertificate = async () => {
+    if (!certificateFile) {
+      toast.error("Selecione um arquivo PFX");
+      return;
+    }
+
+    if (!certificatePassword) {
+      toast.error("Informe a senha do certificado");
+      return;
+    }
+
+    try {
+      await storePfxCertificate(certificateFile, certificatePassword);
+      setCertificateReady(true);
+      setCertificateInfo(getStoredCertificateInfo());
+      toast.success("Certificado armazenado com segurança");
+    } catch {
+      toast.error("Não foi possível armazenar o certificado");
+    }
+  };
+
   const handleDelete = async (id: string) => {
     if (!confirm("Tem certeza que deseja excluir esta proposta?")) return;
 
@@ -85,95 +129,139 @@ export default function Proposals() {
     proposal: Proposal,
     openInNewTab = false
   ) => {
-    const { data: proposalData, error: proposalError } = await supabase
-      .from("proposals")
-      .select(`
-        *,
-        proposals_number (
-          id
-        ),
-        clients (
-          name,
-          company_name,
-          document,
-          email,
-          phone,
-          segment
-        )
-      `)
-      .eq("id", proposal.id)
-      .single();
-
-    if (proposalError || !proposalData) {
-      toast.error("Erro ao carregar dados da proposta");
+    if (!certificateReady) {
+      toast.error("Importe um certificado PFX antes de assinar o PDF");
       return;
     }
 
-    const proposalNumber = resolveProposalNumber(proposalData as any) || "";
-
-    const { data: items, error: itemsError } = await supabase
-      .from("proposal_items")
-      .select(`
-        *,
-        products (
-          id,
-          name,
-          description
-        )
-      `)
-      .eq("proposal_id", proposal.id);
-
-    if (itemsError) {
-      toast.error("Erro ao carregar itens da proposta");
+    if (!certificatePassword) {
+      toast.error("Informe a senha do certificado para assinar o PDF");
       return;
     }
 
-    const selectedAutomations: any = {};
-    items.forEach((item: any) => {
-      const product = item.products;
-      if (!product) return;
-      selectedAutomations[product.id] = {
-        selected: true,
-        implantation: Number(item.implantation),
-        recurrence: Number(item.recurrence),
-        name: product.name,
-        description: product.description,
+    setSigning(true);
+
+    try {
+      const { data: proposalData, error: proposalError } = await supabase
+        .from("proposals")
+        .select(`
+          *,
+          proposals_number (
+            id
+          ),
+          clients (
+            name,
+            company_name,
+            document,
+            email,
+            phone,
+            segment
+          )
+        `)
+        .eq("id", proposal.id)
+        .single();
+
+      if (proposalError || !proposalData) {
+        throw new Error("Erro ao carregar dados da proposta");
+      }
+
+      const proposalNumber = resolveProposalNumber(proposalData as any) || "";
+
+      const { data: items, error: itemsError } = await supabase
+        .from("proposal_items")
+        .select(`
+          *,
+          products (
+            id,
+            name,
+            description
+          )
+        `)
+        .eq("proposal_id", proposal.id);
+
+      if (itemsError) {
+        throw new Error("Erro ao carregar itens da proposta");
+      }
+
+      const selectedAutomations: Record<string, any> = {};
+      (items || []).forEach((item: any) => {
+        const product = item.products;
+        if (!product) return;
+        selectedAutomations[product.id] = {
+          selected: true,
+          implantation: Number(item.implantation),
+          recurrence: Number(item.recurrence),
+          name: product.name,
+          description: product.description,
+        };
+      });
+
+      const pdfData = {
+        clientName: proposalData.clients.name,
+        companyName: proposalData.clients.company_name,
+        document: proposalData.clients.document || "",
+        email: proposalData.clients.email,
+        phone: proposalData.clients.phone || "",
+        date: proposalData.date,
+        segment: proposalData.clients.segment || "",
+        proposalNumber,
+        proposalId: String(proposalData.id),
+        selectedAutomations,
+        observations: proposalData.observations || "",
+        responsible: proposalData.responsible,
+        companyConfig: {
+          name: proposalData.company_name,
+          address: proposalData.company_address,
+          email: proposalData.company_email,
+          phone: proposalData.company_phone,
+        },
+        proposalTexts: {
+          introductionText: proposalData.intro_text,
+          objectiveText: proposalData.objective_text,
+          servicesText: proposalData.services_text,
+          whyText: proposalData.why_text,
+        },
+        pricingLabels: {
+          implantation: "Implantação (R$)",
+          recurrence: "Recorrência",
+        },
       };
-    });
 
-    const pdfData = {
-      clientName: proposalData.clients.name,
-      companyName: proposalData.clients.company_name,
-      document: proposalData.clients.document || "",
-      email: proposalData.clients.email,
-      phone: proposalData.clients.phone || "",
-      date: proposalData.date,
-      segment: proposalData.clients.segment || "",
-      proposalNumber,
-      proposalId: String(proposalData.id),
-      selectedAutomations,
-      observations: proposalData.observations || "",
-      responsible: proposalData.responsible,
-      companyConfig: {
-        name: proposalData.company_name,
-        address: proposalData.company_address,
-        email: proposalData.company_email,
-        phone: proposalData.company_phone,
-      },
-      proposalTexts: {
-        introductionText: proposalData.intro_text,
-        objectiveText: proposalData.objective_text,
-        servicesText: proposalData.services_text,
-        whyText: proposalData.why_text,
-      },
-      pricingLabels: {
-        implantation: "Implantação (R$)",
-        recurrence: "Recorrência",
-      },
-    };
+      const unsignedPdf = (await generateProposalPDF(pdfData, {
+        returnData: "blob",
+      })) as Blob;
 
-    await generateProposalPDF(pdfData, { openInNewTab });
-    toast.success("PDF gerado com sucesso!");
+      const signedPdf = await signPdfWithPfx(unsignedPdf, certificatePassword);
+      const fileName = formatProposalPdfFileName(
+        proposalData.clients.name,
+        proposalData.date
+      );
+
+      const blobUrl = URL.createObjectURL(signedPdf);
+
+      if (openInNewTab) {
+        window.open(blobUrl, "_blank");
+      } else {
+        const link = document.createElement("a");
+        link.href = blobUrl;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+
+      setSignedProposals((current) => ({ ...current, [proposal.id]: true }));
+      toast.success("PDF assinado e gerado com sucesso!");
+
+      setTimeout(() => {
+        URL.revokeObjectURL(blobUrl);
+      }, 5000);
+    } catch (error: any) {
+      console.error(error);
+      toast.error(error?.message || "Erro ao gerar PDF");
+    } finally {
+      setSigning(false);
+    }
   };
 
   return (
@@ -189,6 +277,62 @@ export default function Proposals() {
         </Button>
       </div>
 
+      <div className="border rounded-lg bg-card p-4 space-y-4">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h2 className="text-xl font-semibold">Certificado digital</h2>
+            <p className="text-muted-foreground text-sm">
+              Importe o PFX e proteja com senha para assinar os PDFs antes do envio.
+            </p>
+          </div>
+          <Badge variant={certificateReady ? "default" : "secondary"}>
+            {certificateReady ? "Certificado pronto" : "Sem certificado"}
+          </Badge>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-3">
+          <div className="space-y-2">
+            <Label htmlFor="pfx-file">Arquivo PFX</Label>
+            <Input
+              id="pfx-file"
+              type="file"
+              accept=".pfx,.p12"
+              onChange={handleCertificateChange}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="pfx-password">Senha do certificado</Label>
+            <Input
+              id="pfx-password"
+              type="password"
+              value={certificatePassword}
+              onChange={(event) => setCertificatePassword(event.target.value)}
+              placeholder="Informe a senha de proteção"
+            />
+          </div>
+          <div className="flex items-end">
+            <Button
+              type="button"
+              className="w-full"
+              onClick={handleStoreCertificate}
+              disabled={!certificateFile || !certificatePassword}
+            >
+              Salvar certificado
+            </Button>
+          </div>
+        </div>
+
+        {certificateInfo && (
+          <div className="text-sm text-muted-foreground flex gap-4 flex-wrap">
+            <span>Arquivo: {certificateInfo.name}</span>
+            <span>
+              Importado em {new Date(certificateInfo.createdAt).toLocaleString("pt-BR")}
+            </span>
+            <span>{(certificateInfo.size / 1024).toFixed(1)} KB</span>
+          </div>
+        )}
+      </div>
+
       <div className="border rounded-lg bg-card">
         <Table>
           <TableHeader>
@@ -198,19 +342,20 @@ export default function Proposals() {
               <TableHead>Empresa</TableHead>
               <TableHead>Data</TableHead>
               <TableHead>Responsável</TableHead>
+              <TableHead>Status</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center">
+                <TableCell colSpan={7} className="text-center">
                   Carregando...
                 </TableCell>
               </TableRow>
             ) : proposals.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="text-center">
+                <TableCell colSpan={7} className="text-center">
                   Nenhuma proposta cadastrada
                 </TableCell>
               </TableRow>
@@ -228,6 +373,11 @@ export default function Proposals() {
                     {new Date(proposal.date).toLocaleDateString("pt-BR")}
                   </TableCell>
                   <TableCell>{proposal.responsible}</TableCell>
+                  <TableCell>
+                    <Badge variant={signedProposals[proposal.id] ? "default" : "secondary"}>
+                      {signedProposals[proposal.id] ? "Assinado" : "Pendente"}
+                    </Badge>
+                  </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
                       <Button
@@ -241,6 +391,7 @@ export default function Proposals() {
                         variant="ghost"
                         size="icon"
                         onClick={() => handleGeneratePDF(proposal)}
+                        disabled={signing}
                       >
                         <FileText className="h-4 w-4" />
                       </Button>
@@ -248,6 +399,7 @@ export default function Proposals() {
                         variant="ghost"
                         size="icon"
                         onClick={() => handleGeneratePDF(proposal, true)}
+                        disabled={signing}
                       >
                         <ExternalLink className="h-4 w-4" />
                       </Button>
