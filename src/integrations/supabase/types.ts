@@ -61,6 +61,79 @@ export type Database = {
           },
         ]
       }
+      contracts: {
+        Row: {
+          client_id: string
+          created_at: string
+          created_by: string
+          duration_months: number
+          end_date: string
+          id: string
+          pdf_hash: string
+          proposal_id: string | null
+          renewal_policy: string
+          signature_metadata: Json | null
+          start_date: string
+          status: string
+          updated_at: string
+          value: number
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          created_by: string
+          duration_months: number
+          end_date: string
+          id?: string
+          pdf_hash: string
+          proposal_id?: string | null
+          renewal_policy: string
+          signature_metadata?: Json | null
+          start_date: string
+          status?: string
+          updated_at?: string
+          value: number
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          created_by?: string
+          duration_months?: number
+          end_date?: string
+          id?: string
+          pdf_hash?: string
+          proposal_id?: string | null
+          renewal_policy?: string
+          signature_metadata?: Json | null
+          start_date?: string
+          status?: string
+          updated_at?: string
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contracts_client_id_fkey",
+            columns: ["client_id"],
+            isOneToOne: false,
+            referencedRelation: "clients",
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contracts_created_by_fkey",
+            columns: ["created_by"],
+            isOneToOne: false,
+            referencedRelation: "profiles",
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contracts_proposal_id_fkey",
+            columns: ["proposal_id"],
+            isOneToOne: false,
+            referencedRelation: "proposals",
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       appointments: {
         Row: {
           client_id: string
