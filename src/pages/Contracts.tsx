@@ -592,7 +592,9 @@ export default function Contracts() {
               contracts.map((contract) => (
                 <TableRow key={contract.id}>
                   <TableCell className="font-medium">
-                    {contract.contract_number || resolveProposalNumber(contract.proposals as any) || "-"}
+                    {contract.contract_number ||
+                      (contract.proposals ? resolveProposalNumber(contract.proposals as any) : undefined) ||
+                      "-"}
                   </TableCell>
                   <TableCell className="font-medium">
                     {contract.clients?.name}
