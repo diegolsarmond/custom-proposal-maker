@@ -431,7 +431,14 @@ export default function SendEmail() {
         body: formData,
       });
 
-      const data = await response.json();
+      const rawResponse = await response.text();
+      let data: any = {};
+
+      try {
+        data = rawResponse ? JSON.parse(rawResponse) : {};
+      } catch {
+        data = { error: rawResponse?.trim() };
+      }
 
       if (!response.ok) {
         throw new Error(data?.error || "Erro ao enviar email");
