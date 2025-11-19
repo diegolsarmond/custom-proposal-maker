@@ -16,6 +16,7 @@ import NewProposal from "./pages/NewProposal";
 import SendEmail from "./pages/SendEmail";
 import Agenda from "./pages/Agenda";
 import NotFound from "./pages/NotFound";
+import Contracts from "./pages/Contracts";
 
 const queryClient = new QueryClient();
 
@@ -84,6 +85,16 @@ const App = () => (
                 <ProtectedRoute>
                   <Layout>
                     <Proposals />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/contracts"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Contracts />
                   </Layout>
                 </ProtectedRoute>
               }
