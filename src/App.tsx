@@ -14,6 +14,7 @@ import Users from "./pages/Users";
 import Proposals from "./pages/Proposals";
 import NewProposal from "./pages/NewProposal";
 import SendEmail from "./pages/SendEmail";
+import Agenda from "./pages/Agenda";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -53,6 +54,16 @@ const App = () => (
                 <ProtectedRoute>
                   <Layout>
                     <Products />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/agenda"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Agenda />
                   </Layout>
                 </ProtectedRoute>
               }
