@@ -1,4 +1,13 @@
-import { Users, FileText, Package, UserCog, LogOut, Mail, CalendarClock } from "lucide-react";
+import {
+  Users,
+  FileText,
+  Package,
+  UserCog,
+  LogOut,
+  Mail,
+  CalendarClock,
+  FileSignature,
+} from "lucide-react";
 import { NavLink } from "react-router-dom";
 import {
   Sidebar,
@@ -27,6 +36,11 @@ const menuItems = [
     title: "Agenda",
     url: "/agenda",
     icon: CalendarClock,
+  },
+  {
+    title: "Contratos",
+    url: "/contracts",
+    icon: FileSignature,
   },
   {
     title: "Propostas Comerciais",
