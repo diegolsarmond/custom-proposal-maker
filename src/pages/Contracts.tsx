@@ -15,44 +15,6 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { toast } from "sonner";
-import { Eye, FileSignature, Printer, Plus } from "lucide-react";
-import { resolveProposalNumber } from "@/utils/resolveProposalNumber";
-import {
-  ContractPdfData,
-  ContractItem,
-  generateContractPDF,
-} from "@/utils/contractPdfGenerator";
-
-interface ContractRecord {
-  id: string;
-  created_at: string;
-  contract_number?: string | null;
-  status?: string | null;
-  proposal_id?: string | null;
-  clients: {
-    name: string;
-    company_name: string;
-    document?: string | null;
-    email?: string | null;
-    phone?: string | null;
-    segment?: string | null;
-  };
-  proposals?: any;
-}
-
-export default function Contracts() {
-  const navigate = useNavigate();
-  const [contracts, setContracts] = useState<ContractRecord[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [previewData, setPreviewData] = useState<string | null>(null);
-  const supabaseClient = supabase as any;
-
-  useEffect(() => {
-    fetchContracts();
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -70,13 +32,22 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Pencil, Plus, RefreshCcw } from "lucide-react";
+import { Eye, FileSignature, Pencil, Plus, Printer, RefreshCcw } from "lucide-react";
 import { resolveProposalNumber } from "@/utils/resolveProposalNumber";
+import {
+  ContractItem,
+  ContractPdfData,
+  generateContractPDF,
+} from "@/utils/contractPdfGenerator";
 
 interface ClientOption {
   id: string;
   name: string;
   company_name: string;
+  document?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  segment?: string | null;
 }
 
 interface ProposalOption {
@@ -84,11 +55,16 @@ interface ProposalOption {
   date: string;
   proposal_number?: string | null;
   proposals_number?: { id?: number | null } | { id?: number | null }[] | null;
-  clients?: {
-    id: string;
-    name: string;
-    company_name: string;
-  } | null;
+  clients?: ClientOption | null;
+  company_name?: string | null;
+  company_address?: string | null;
+  company_phone?: string | null;
+  company_email?: string | null;
+  responsible?: string | null;
+  intro_text?: string | null;
+  objective_text?: string | null;
+  services_text?: string | null;
+  why_text?: string | null;
 }
 
 interface Contract {
@@ -99,6 +75,8 @@ interface Contract {
   end_date: string | null;
   status: string;
   notes: string | null;
+  contract_number?: string | null;
+  created_at: string;
   clients?: ClientOption;
   proposals?: ProposalOption;
 }
@@ -118,6 +96,7 @@ export default function Contracts() {
   const [renewOpen, setRenewOpen] = useState(false);
   const [editingContract, setEditingContract] = useState<Contract | null>(null);
   const [renewingContract, setRenewingContract] = useState<Contract | null>(null);
+  const [previewData, setPreviewData] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     client_id: "",
     proposal_id: "",
@@ -155,13 +134,30 @@ export default function Contracts() {
       .from("contracts")
       .select(`
         *,
-        clients (id, name, company_name),
+        clients (
+          id,
+          name,
+          company_name,
+          document,
+          email,
+          phone,
+          segment
+        ),
         proposals (
           id,
           date,
           proposal_number,
           proposals_number (id),
-          clients (id, name, company_name)
+          clients (id, name, company_name),
+          company_name,
+          company_address,
+          company_phone,
+          company_email,
+          responsible,
+          intro_text,
+          objective_text,
+          services_text,
+          why_text
         )
       `)
       .order("created_at", { ascending: false });
@@ -200,7 +196,7 @@ export default function Contracts() {
     }));
   };
 
-  const buildPdfData = async (contract: ContractRecord): Promise<ContractPdfData> => {
+  const buildPdfData = async (contract: Contract): Promise<ContractPdfData> => {
     const items = await fetchItems(contract.proposal_id || contract.proposals?.id);
     const proposalNumber = contract.proposals
       ? resolveProposalNumber(contract.proposals as any)
@@ -245,27 +241,27 @@ export default function Contracts() {
     };
   };
 
-  const handlePreview = async (contract: ContractRecord) => {
+  const handlePreview = async (contract: Contract) => {
     const pdfData = await buildPdfData(contract);
     const dataUri = await generateContractPDF(pdfData, { returnData: "datauristring" });
     setPreviewData(dataUri);
     toast.success("PDF gerado com sucesso!");
   };
 
-  const handlePrint = async (contract: ContractRecord) => {
+  const handlePrint = async (contract: Contract) => {
     const pdfData = await buildPdfData(contract);
     const dataUri = await generateContractPDF(pdfData, { returnData: "datauristring" });
     const printWindow = window.open("", "_blank");
     if (printWindow) {
       printWindow.document.write(
-        `<iframe src="${dataUri}" style="width:100%;height:100%;" title="Contrato"></iframe>`,
+        `<iframe src="${dataUri}" style="width:100%;height:100%;" title="Contrato"></iframe>`
       );
       setTimeout(() => printWindow.print(), 500);
     }
     toast.success("PDF enviado para impressão!");
   };
 
-  const handleSign = async (contract: ContractRecord) => {
+  const handleSign = async (contract: Contract) => {
     const pdfData = await buildPdfData(contract);
     const blob = await generateContractPDF(pdfData, { returnData: "blob" });
     const url = URL.createObjectURL(blob);
@@ -275,10 +271,12 @@ export default function Contracts() {
     link.click();
     window.open(url, "_blank");
     toast.success("Contrato pronto para assinatura e download!");
+  };
+
   const fetchClients = async () => {
     const { data, error } = await supabase
       .from("clients")
-      .select("id, name, company_name")
+      .select("id, name, company_name, document, email, phone, segment")
       .order("company_name", { ascending: true });
 
     if (error) {
@@ -296,7 +294,16 @@ export default function Contracts() {
         date,
         proposal_number,
         proposals_number (id),
-        clients (id, name, company_name)
+        clients (id, name, company_name),
+        company_name,
+        company_address,
+        company_phone,
+        company_email,
+        responsible,
+        intro_text,
+        objective_text,
+        services_text,
+        why_text
       `)
       .order("date", { ascending: false });
 
@@ -436,131 +443,130 @@ export default function Contracts() {
           <Plus className="mr-2 h-4 w-4" />
           Nova Proposta
         </Button>
-          <p className="text-muted-foreground">Gerencie contratos ativos e renovações</p>
-        </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => navigate("/proposals")}>Propostas</Button>
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={handleOpenNew}>
-                <Plus className="mr-2 h-4 w-4" />
-                Novo Contrato
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[600px]">
-              <DialogHeader>
-                <DialogTitle>
-                  {editingContract ? "Editar contrato" : "Novo contrato"}
-                </DialogTitle>
-              </DialogHeader>
-              <form className="space-y-4" onSubmit={handleSave}>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Cliente</Label>
-                    <Select
-                      value={formData.client_id}
-                      onValueChange={(value) =>
-                        setFormData((prev) => ({ ...prev, client_id: value }))
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione um cliente" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {clients.map((client) => (
-                          <SelectItem key={client.id} value={client.id}>
-                            {client.company_name} - {client.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Proposta</Label>
-                    <Select
-                      value={formData.proposal_id}
-                      onValueChange={(value) =>
-                        setFormData((prev) => ({ ...prev, proposal_id: value }))
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione uma proposta" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {proposals.map((proposal) => (
-                          <SelectItem key={proposal.id} value={proposal.id}>
-                            {proposalMap[proposal.id]} - {proposal.clients?.company_name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Data de início</Label>
-                    <Input
-                      type="date"
-                      value={formData.start_date}
-                      onChange={(e) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          start_date: e.target.value,
-                        }))
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Data de término</Label>
-                    <Input
-                      type="date"
-                      value={formData.end_date}
-                      onChange={(e) =>
-                        setFormData((prev) => ({
-                          ...prev,
-                          end_date: e.target.value,
-                        }))
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Status</Label>
-                    <Select
-                      value={formData.status}
-                      onValueChange={(value) =>
-                        setFormData((prev) => ({ ...prev, status: value }))
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione o status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {statusOptions.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2 md:col-span-2">
-                    <Label>Observações</Label>
-                    <Textarea
-                      value={formData.notes}
-                      onChange={(e) =>
-                        setFormData((prev) => ({ ...prev, notes: e.target.value }))
-                      }
-                      placeholder="Detalhes relevantes do contrato"
-                    />
-                  </div>
+      </div>
+      <p className="text-muted-foreground">Gerencie contratos ativos e renovações</p>
+      <div className="flex gap-2">
+        <Button variant="outline" onClick={() => navigate("/proposals")}>Propostas</Button>
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild>
+            <Button onClick={handleOpenNew}>
+              <Plus className="mr-2 h-4 w-4" />
+              Novo Contrato
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[600px]">
+            <DialogHeader>
+              <DialogTitle>
+                {editingContract ? "Editar contrato" : "Novo contrato"}
+              </DialogTitle>
+            </DialogHeader>
+            <form className="space-y-4" onSubmit={handleSave}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Cliente</Label>
+                  <Select
+                    value={formData.client_id}
+                    onValueChange={(value) =>
+                      setFormData((prev) => ({ ...prev, client_id: value }))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione um cliente" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {clients.map((client) => (
+                        <SelectItem key={client.id} value={client.id}>
+                          {client.company_name} - {client.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-                <DialogFooter>
-                  <Button type="submit">
-                    {editingContract ? "Salvar alterações" : "Criar contrato"}
-                  </Button>
-                </DialogFooter>
-              </form>
-            </DialogContent>
-          </Dialog>
-        </div>
+                <div className="space-y-2">
+                  <Label>Proposta</Label>
+                  <Select
+                    value={formData.proposal_id}
+                    onValueChange={(value) =>
+                      setFormData((prev) => ({ ...prev, proposal_id: value }))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione uma proposta" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {proposals.map((proposal) => (
+                        <SelectItem key={proposal.id} value={proposal.id}>
+                          {proposalMap[proposal.id]} - {proposal.clients?.company_name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Data de início</Label>
+                  <Input
+                    type="date"
+                    value={formData.start_date}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        start_date: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Data de término</Label>
+                  <Input
+                    type="date"
+                    value={formData.end_date}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        end_date: e.target.value,
+                      }))
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Status</Label>
+                  <Select
+                    value={formData.status}
+                    onValueChange={(value) =>
+                      setFormData((prev) => ({ ...prev, status: value }))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione o status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {statusOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <Label>Observações</Label>
+                  <Textarea
+                    value={formData.notes}
+                    onChange={(e) =>
+                      setFormData((prev) => ({ ...prev, notes: e.target.value }))
+                    }
+                    placeholder="Detalhes relevantes do contrato"
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button type="submit">
+                  {editingContract ? "Salvar alterações" : "Criar contrato"}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <div className="border rounded-lg bg-card">
@@ -592,34 +598,15 @@ export default function Contracts() {
               contracts.map((contract) => (
                 <TableRow key={contract.id}>
                   <TableCell className="font-medium">
-                    {contract.contract_number || resolveProposalNumber(contract.proposals as any) || "-"}
+                    {contract.clients?.company_name || contract.clients?.name}
                   </TableCell>
                   <TableCell className="font-medium">
-                    {contract.clients?.name}
+                    {contract.proposals ? proposalMap[contract.proposals.id] : "-"}
                   </TableCell>
-                  <TableCell>{contract.status || "Em aberto"}</TableCell>
                   <TableCell>
-                    {new Date(contract.created_at).toLocaleDateString("pt-BR")}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button variant="ghost" size="icon" onClick={() => handlePreview(contract)}>
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" onClick={() => handlePrint(contract)}>
-                        <Printer className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" onClick={() => handleSign(contract)}>
-                        <FileSignature className="h-4 w-4" />
-                    {contract.clients?.company_name || "-"}
-                  </TableCell>
-                  <TableCell className="font-medium">
-                    {contract.proposals
-                      ? proposalMap[contract.proposals.id]
+                    {contract.start_date
+                      ? new Date(contract.start_date).toLocaleDateString("pt-BR")
                       : "-"}
-                  </TableCell>
-                  <TableCell>
-                    {new Date(contract.start_date).toLocaleDateString("pt-BR")}
                   </TableCell>
                   <TableCell>
                     {contract.end_date
@@ -633,6 +620,15 @@ export default function Contracts() {
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
+                      <Button variant="ghost" size="icon" onClick={() => handlePreview(contract)}>
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" onClick={() => handlePrint(contract)}>
+                        <Printer className="h-4 w-4" />
+                      </Button>
+                      <Button variant="ghost" size="icon" onClick={() => handleSign(contract)}>
+                        <FileSignature className="h-4 w-4" />
+                      </Button>
                       <Dialog open={renewOpen && renewingContract?.id === contract.id} onOpenChange={setRenewOpen}>
                         <DialogTrigger asChild>
                           <Button
