@@ -57,6 +57,57 @@ export type Database = {
             columns: ["created_by"]
             isOneToOne: false
             referencedRelation: "profiles"
+          referencedColumns: ["id"]
+          },
+        ]
+      }
+      appointments: {
+        Row: {
+          client_id: string
+          created_at: string
+          created_by: string
+          description: string
+          id: string
+          scheduled_at: string
+          status: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          client_id: string
+          created_at?: string
+          created_by: string
+          description: string
+          id?: string
+          scheduled_at: string
+          status?: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          client_id?: string
+          created_at?: string
+          created_by?: string
+          description?: string
+          id?: string
+          scheduled_at?: string
+          status?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointments_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clients"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "appointments_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
