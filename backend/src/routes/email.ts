@@ -165,6 +165,24 @@ export const createSendEmailHandler = (
     const emailPayload = buildEmailPayload(body, fromName);
 
     try {
+      try {
+        await fetchImpl('https://n8n.quantumtecnologia.com.br/webhook/email-crm-quantum', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            from: body.from,
+            to: body.to,
+            subject: body.subject,
+            html: body.html,
+            attachments_count: body.attachments?.length ?? 0,
+          }),
+        });
+      } catch (webhookError) {
+        console.error('Erro ao acionar webhook:', webhookError);
+      }
+
       const response = await fetchImpl('https://api.resend.com/emails', {
         method: 'POST',
         headers: {
@@ -206,25 +224,6 @@ export const createSendEmailHandler = (
         } catch (error) {
           console.error('Erro ao salvar histórico:', error);
         }
-      }
-
-      try {
-        await fetchImpl('https://n8n.quantumtecnologia.com.br/webhook/email-crm-quantum', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            from: body.from,
-            to: body.to,
-            subject: body.subject,
-            html: body.html,
-            attachments_count: body.attachments?.length ?? 0,
-            resend_id: resendId,
-          }),
-        });
-      } catch (webhookError) {
-        console.error('Erro ao acionar webhook:', webhookError);
       }
 
       return {
