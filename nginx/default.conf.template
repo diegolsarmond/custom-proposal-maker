@@ -10,7 +10,7 @@ server {
 
     set $email_backend_origin "${EMAIL_BACKEND_ORIGIN}";
     if ($email_backend_origin = "") {
-        set $email_backend_origin "127.0.0.1:3001";
+        set $email_backend_origin "backend:3001";
     }
     if ($email_backend_origin !~* "^https?://") {
         set $email_backend_origin "http://$email_backend_origin";
