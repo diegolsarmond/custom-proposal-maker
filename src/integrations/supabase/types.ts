@@ -67,6 +67,7 @@ export type Database = {
           created_at: string
           created_by: string
           description: string
+          google_event_id: string | null
           id: string
           scheduled_at: string
           status: string
@@ -78,6 +79,7 @@ export type Database = {
           created_at?: string
           created_by: string
           description: string
+          google_event_id?: string | null
           id?: string
           scheduled_at: string
           status?: string
@@ -89,6 +91,7 @@ export type Database = {
           created_at?: string
           created_by?: string
           description?: string
+          google_event_id?: string | null
           id?: string
           scheduled_at?: string
           status?: string
