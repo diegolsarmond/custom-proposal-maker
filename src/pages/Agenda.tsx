@@ -40,6 +40,10 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { CalendarPlus, Pencil, Plus, RotateCcw, Slash } from "lucide-react";
+import { DayPicker } from "react-day-picker";
+import "react-day-picker/dist/style.css";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 interface ClientOption {
   id: string;
@@ -68,6 +72,7 @@ const statusOptions = [
 
 export default function Agenda() {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [calendarAppointments, setCalendarAppointments] = useState<Appointment[]>([]);
   const [clients, setClients] = useState<ClientOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
@@ -76,6 +81,7 @@ export default function Agenda() {
   const [clientFilter, setClientFilter] = useState("todos");
   const [page, setPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const pageSize = 10;
   const { user } = useAuth();
 
@@ -94,11 +100,25 @@ export default function Agenda() {
 
   useEffect(() => {
     fetchClients();
+    fetchCalendarAppointments();
   }, []);
 
   useEffect(() => {
     fetchAppointments();
   }, [page, statusFilter, clientFilter]);
+
+  const fetchCalendarAppointments = async () => {
+    const { data, error } = await supabase
+      .from("appointments")
+      .select(`*, clients (id, name, company_name)`)
+      .order("scheduled_at", { ascending: true });
+
+    if (error) {
+      toast.error("Erro ao carregar eventos do calendário");
+    } else {
+      setCalendarAppointments((data as Appointment[]) || []);
+    }
+  };
 
   const fetchClients = async () => {
     const { data, error } = await supabase
@@ -177,6 +197,7 @@ export default function Agenda() {
       } else {
         toast.success("Agendamento atualizado com sucesso!");
         fetchAppointments();
+        fetchCalendarAppointments();
         handleClose();
       }
     } else {
@@ -196,6 +217,7 @@ export default function Agenda() {
       } else {
         toast.success("Agendamento criado com sucesso!");
         fetchAppointments();
+        fetchCalendarAppointments();
         handleClose();
       }
     }
@@ -236,6 +258,7 @@ export default function Agenda() {
     } else {
       toast.success("Status atualizado");
       fetchAppointments();
+      fetchCalendarAppointments();
     }
   };
 
@@ -246,6 +269,42 @@ export default function Agenda() {
 
   const canGoPrevious = page > 1;
   const canGoNext = page < totalPages;
+
+  const appointmentsByDate = useMemo(() => {
+    const grouped: Record<string, Appointment[]> = {};
+
+    calendarAppointments.forEach((appointment) => {
+      const key = format(new Date(appointment.scheduled_at), "yyyy-MM-dd");
+
+      if (!grouped[key]) {
+        grouped[key] = [];
+      }
+
+      grouped[key].push(appointment);
+    });
+
+    return grouped;
+  }, [calendarAppointments]);
+
+  const eventDays = useMemo(() => {
+    const uniqueDates = new Map<string, Date>();
+
+    calendarAppointments.forEach((appointment) => {
+      const date = new Date(appointment.scheduled_at);
+      const key = format(date, "yyyy-MM-dd");
+
+      if (!uniqueDates.has(key)) {
+        uniqueDates.set(key, new Date(date.toDateString()));
+      }
+    });
+
+    return Array.from(uniqueDates.values());
+  }, [calendarAppointments]);
+
+  const selectedDateKey = selectedDate ? format(selectedDate, "yyyy-MM-dd") : null;
+  const selectedDayAppointments = selectedDateKey
+    ? appointmentsByDate[selectedDateKey] || []
+    : [];
 
   return (
     <div className="space-y-6">
@@ -344,6 +403,79 @@ export default function Agenda() {
         </Dialog>
       </div>
 
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 border rounded-lg bg-card p-4 space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-semibold">Calendário</h2>
+              <p className="text-sm text-muted-foreground">
+                Visualize agendamentos com destaques nos dias com eventos
+              </p>
+            </div>
+            <Badge variant="outline">{eventDays.length} dias com eventos</Badge>
+          </div>
+          <DayPicker
+            mode="single"
+            selected={selectedDate}
+            onSelect={setSelectedDate}
+            locale={ptBR}
+            weekStartsOn={1}
+            modifiers={{ evento: eventDays }}
+            modifiersStyles={{
+              evento: {
+                backgroundColor: "rgb(59 130 246)",
+                color: "white",
+              },
+            }}
+            className="w-full"
+          />
+        </div>
+        <div className="border rounded-lg bg-card p-4 space-y-4">
+          <div className="space-y-1">
+            <h3 className="text-lg font-semibold">Eventos do dia</h3>
+            <p className="text-sm text-muted-foreground">
+              {selectedDate
+                ? format(selectedDate, "EEEE, dd 'de' MMMM", { locale: ptBR })
+                : "Selecione uma data"}
+            </p>
+          </div>
+          {selectedDayAppointments.length === 0 ? (
+            <p className="text-muted-foreground text-sm">Nenhum evento para esta data.</p>
+          ) : (
+            <div className="space-y-3">
+              {selectedDayAppointments.map((appointment) => (
+                <div
+                  key={appointment.id}
+                  className="rounded-lg border p-3 bg-muted/50 space-y-2"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="font-semibold">{appointment.type}</div>
+                    <Badge
+                      variant={
+                        appointment.status === "ativo" ? "default" : "destructive"
+                      }
+                      className="capitalize"
+                    >
+                      {appointment.status}
+                    </Badge>
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    {appointment.clients.company_name} - {appointment.clients.name}
+                  </div>
+                  <div className="text-sm">
+                    {new Date(appointment.scheduled_at).toLocaleTimeString("pt-BR", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </div>
+                  <div className="text-sm line-clamp-2">{appointment.description}</div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="space-y-2">
           <Label>Filtrar por status</Label>
@@ -393,7 +525,13 @@ export default function Agenda() {
           >
             Limpar filtros
           </Button>
-          <Button onClick={() => fetchAppointments()} variant="ghost">
+          <Button
+            onClick={() => {
+              fetchAppointments();
+              fetchCalendarAppointments();
+            }}
+            variant="ghost"
+          >
             Atualizar
           </Button>
         </div>
