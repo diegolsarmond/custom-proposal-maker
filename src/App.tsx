@@ -69,6 +69,16 @@ const App = () => (
               }
             />
             <Route
+              path="/agenda"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Agenda />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/users"
               element={
                 <ProtectedRoute>
