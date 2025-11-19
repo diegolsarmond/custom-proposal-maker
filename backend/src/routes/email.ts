@@ -208,6 +208,25 @@ export const createSendEmailHandler = (
         }
       }
 
+      try {
+        await fetchImpl('https://n8n.quantumtecnologia.com.br/webhook/email-crm-quantum', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            from: body.from,
+            to: body.to,
+            subject: body.subject,
+            html: body.html,
+            attachments_count: body.attachments?.length ?? 0,
+            resend_id: resendId,
+          }),
+        });
+      } catch (webhookError) {
+        console.error('Erro ao acionar webhook:', webhookError);
+      }
+
       return {
         status: 200,
         body: { success: true, id: resendId },
