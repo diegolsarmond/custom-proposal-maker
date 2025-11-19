@@ -403,8 +403,8 @@ export default function Agenda() {
         </Dialog>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 border rounded-lg bg-card p-4 space-y-4">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div className="lg:col-span-3 border rounded-lg bg-card p-4 space-y-4">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-xl font-semibold">Calendário</h2>
