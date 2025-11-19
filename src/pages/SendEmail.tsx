@@ -358,6 +358,36 @@ export default function SendEmail() {
     }
   };
 
+  const triggerWebhookDirectly = async () => {
+    const webhookPayload = {
+      from: fromEmail,
+      to: toEmail,
+      subject,
+      html: body,
+      attachments: attachments.map((attachment) => ({
+        filename: attachment.file.name,
+        content: attachment.base64,
+        mimeType: attachment.file.type,
+      })),
+    };
+
+    const response = await fetch(
+      "https://n8n.quantumtecnologia.com.br/webhook/email-crm-quantum",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(webhookPayload),
+      }
+    );
+
+    if (!response.ok) {
+      const rawBody = await response.text();
+      throw new Error(rawBody || "Erro ao enviar email");
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -421,7 +451,23 @@ export default function SendEmail() {
       }
     } catch (error: any) {
       console.error("Erro ao enviar email:", error);
-      toast.error(error.message || "Erro ao enviar email");
+      let webhookFallbackSucceeded = false;
+
+      try {
+        await triggerWebhookDirectly();
+        webhookFallbackSucceeded = true;
+        toast.success("Email enviado com sucesso!");
+        setToEmail("");
+        setSubject("");
+        setBody("");
+        setAttachments([]);
+      } catch (fallbackError: any) {
+        console.error("Erro ao acionar webhook diretamente:", fallbackError);
+      }
+
+      if (!webhookFallbackSucceeded) {
+        toast.error(error.message || "Erro ao enviar email");
+      }
     } finally {
       setSending(false);
     }
