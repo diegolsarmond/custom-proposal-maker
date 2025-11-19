@@ -116,8 +116,7 @@ export const createSendEmailHandler = (
 ) => {
   const createSupabaseClient = overrides.createSupabaseClient ?? defaultCreateSupabaseClient;
   const fetchImpl = overrides.fetchImpl ?? defaultFetchImpl;
-  const resendApiKey =
-    overrides.resendApiKey ?? process.env.RESEND_API_KEY ?? process.env.SMTP_PASSWORD ?? '';
+  const resendApiKey = overrides.resendApiKey ?? process.env.RESEND_API_KEY ?? '';
   const fromName = overrides.fromName ?? process.env.SMTP_FROM_NAME ?? 'Quantum Tecnologia';
 
   return async (body: SendEmailRequest, headers: IncomingHttpHeaders): Promise<HandlerResult> => {
