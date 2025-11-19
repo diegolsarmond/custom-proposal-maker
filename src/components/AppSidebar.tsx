@@ -38,6 +38,11 @@ const menuItems = [
     icon: CalendarClock,
   },
   {
+    title: "Contratos",
+    url: "/contracts",
+    icon: FileSignature,
+  },
+  {
     title: "Propostas Comerciais",
     url: "/proposals",
     icon: FileText,

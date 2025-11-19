@@ -12,6 +12,7 @@ import Clients from "./pages/Clients";
 import Products from "./pages/Products";
 import Users from "./pages/Users";
 import Proposals from "./pages/Proposals";
+import Contracts from "./pages/Contracts";
 import NewProposal from "./pages/NewProposal";
 import SendEmail from "./pages/SendEmail";
 import Agenda from "./pages/Agenda";
