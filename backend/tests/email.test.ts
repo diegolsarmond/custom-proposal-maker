@@ -25,13 +25,12 @@ test('envio bem-sucedido retorna 200 e registra histórico como enviado', async 
 
   const fetchMock = mock.fn(async () => ({
     ok: true,
-    text: async () => JSON.stringify({ id: 'resend-123' }),
+    text: async () => '',
   }));
 
   const handler = createSendEmailHandler({
     createSupabaseClient: () => supabaseMock as any,
     fetchImpl: fetchMock as any,
-    resendApiKey: 'resend-test-key',
   });
 
   const headers: IncomingHttpHeaders = { authorization: 'Bearer token-abc' };
@@ -48,13 +47,14 @@ test('envio bem-sucedido retorna 200 e registra histórico como enviado', async 
   );
 
   assert.equal(result.status, 200);
-  assert.deepEqual(result.body, { success: true, id: 'resend-123' });
+  assert.deepEqual(result.body, { success: true });
   assert.equal(fetchMock.mock.calls.length, 1);
   assert.equal(supabaseMock.from.mock.calls.length, 1);
   assert.equal(insertCalls.length, 1);
   assert.equal(insertCalls[0].status, 'sent');
   assert.equal(insertCalls[0].attachments_count, 1);
   assert.equal(insertCalls[0].sent_by, 'user-1');
+  assert.equal(insertCalls[0].resend_id, null);
 });
 
 test('falha ao enviar retorna 500 e registra histórico de erro', async () => {
@@ -73,13 +73,12 @@ test('falha ao enviar retorna 500 e registra histórico de erro', async () => {
 
   const fetchMock = mock.fn(async () => ({
     ok: false,
-    text: async () => JSON.stringify({ message: 'Erro Resend' }),
+    text: async () => JSON.stringify({ message: 'Erro Webhook' }),
   }));
 
   const handler = createSendEmailHandler({
     createSupabaseClient: () => supabaseMock as any,
     fetchImpl: fetchMock as any,
-    resendApiKey: 'resend-test-key',
   });
 
   const headers: IncomingHttpHeaders = { authorization: 'Bearer token-def' };
@@ -96,11 +95,12 @@ test('falha ao enviar retorna 500 e registra histórico de erro', async () => {
 
   assert.equal(result.status, 500);
   assert.equal((result.body as any).success, false);
-  assert.equal((result.body as any).error, 'Erro Resend');
+  assert.equal((result.body as any).error, 'Erro Webhook');
   assert.equal(fetchMock.mock.calls.length, 1);
   assert.equal(supabaseMock.from.mock.calls.length, 1);
   assert.equal(insertCalls.length, 1);
   assert.equal(insertCalls[0].status, 'failed');
+  assert.equal(insertCalls[0].resend_id, null);
   assert.equal(insertCalls[0].sent_by, 'user-2');
 });
 
@@ -127,7 +127,6 @@ test('falha com resposta html retorna mensagem sanitizada', async () => {
   const handler = createSendEmailHandler({
     createSupabaseClient: () => supabaseMock as any,
     fetchImpl: fetchMock as any,
-    resendApiKey: 'resend-test-key',
   });
 
   const headers: IncomingHttpHeaders = { authorization: 'Bearer token-ghi' };
@@ -150,13 +149,14 @@ test('falha com resposta html retorna mensagem sanitizada', async () => {
   assert.equal(insertCalls.length, 1);
   assert.equal(insertCalls[0].status, 'failed');
   assert.equal(insertCalls[0].error_message, '404 Not Found nginx/1.29.2');
+  assert.equal(insertCalls[0].resend_id, null);
   assert.equal(insertCalls[0].sent_by, 'user-3');
 });
 
 test('envio continua mesmo sem cliente do supabase', async () => {
   const fetchMock = mock.fn(async () => ({
     ok: true,
-    text: async () => JSON.stringify({ id: 'resend-456' }),
+    text: async () => '',
   }));
 
   const handler = createSendEmailHandler({
@@ -164,7 +164,6 @@ test('envio continua mesmo sem cliente do supabase', async () => {
       throw new Error('indisponível');
     }) as any,
     fetchImpl: fetchMock as any,
-    resendApiKey: 'resend-test-key',
   });
 
   const result = await handler(
@@ -181,14 +180,14 @@ test('envio continua mesmo sem cliente do supabase', async () => {
   assert.equal(fetchMock.mock.calls.length, 1);
 });
 
-test('retorna erro claro quando serviço de email não está configurado', async () => {
+test('continua mesmo sem serviço de email externo configurado', async () => {
   const supabaseFactory = mock.fn(() => {
-    throw new Error('não deve ser chamado');
+    throw new Error('indisponível');
   });
 
   const fetchMock = mock.fn(async () => ({
     ok: true,
-    text: async () => JSON.stringify({ id: 'resend-789' }),
+    text: async () => '',
   }));
 
   const handler = createSendEmailHandler({
@@ -207,9 +206,7 @@ test('retorna erro claro quando serviço de email não está configurado', async
     {},
   );
 
-  assert.equal(result.status, 500);
-  assert.equal((result.body as any).success, false);
-  assert.equal((result.body as any).error, 'Serviço de email não configurado');
-  assert.equal(fetchMock.mock.calls.length, 0);
-  assert.equal(supabaseFactory.mock.calls.length, 0);
+  assert.equal(result.status, 200);
+  assert.equal((result.body as any).success, true);
+  assert.equal(fetchMock.mock.calls.length, 1);
 });

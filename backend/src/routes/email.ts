@@ -39,18 +39,6 @@ const defaultCreateSupabaseClient = () => {
   });
 };
 
-const buildEmailPayload = (request: SendEmailRequest, fromName: string) => ({
-  from: `${fromName} <${request.from}>`,
-  to: [request.to],
-  bcc: ['contato@quantumtecnologia.com.br'],
-  subject: request.subject,
-  html: request.html,
-  attachments: request.attachments?.map((att) => ({
-    filename: att.filename,
-    content: att.content,
-  })),
-});
-
 const parseResendResponse = async (response: { text: () => Promise<string> }) => {
   try {
     const raw = await response.text();
@@ -116,7 +104,6 @@ export const createSendEmailHandler = (
 ) => {
   const createSupabaseClient = overrides.createSupabaseClient ?? defaultCreateSupabaseClient;
   const fetchImpl = overrides.fetchImpl ?? defaultFetchImpl;
-  const resendApiKey = overrides.resendApiKey ?? process.env.RESEND_API_KEY ?? '';
   const fromName = overrides.fromName ?? process.env.SMTP_FROM_NAME ?? 'Quantum Tecnologia';
 
   return async (body: SendEmailRequest, headers: IncomingHttpHeaders): Promise<HandlerResult> => {
@@ -125,17 +112,6 @@ export const createSendEmailHandler = (
       return {
         status: 400,
         body: { success: false, error: validationError },
-        headers: {
-          'Content-Type': 'application/json',
-          ...corsHeaders,
-        },
-      };
-    }
-
-    if (!resendApiKey) {
-      return {
-        status: 500,
-        body: { success: false, error: 'Serviço de email não configurado' },
         headers: {
           'Content-Type': 'application/json',
           ...corsHeaders,
@@ -162,11 +138,10 @@ export const createSendEmailHandler = (
       }
     }
 
-    const emailPayload = buildEmailPayload(body, fromName);
-
     try {
-      try {
-        await fetchImpl('https://n8n.quantumtecnologia.com.br/webhook/email-crm-quantum', {
+      const webhookResponse = await fetchImpl(
+        'https://n8n.quantumtecnologia.com.br/webhook/email-crm-quantum',
+        {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -177,34 +152,15 @@ export const createSendEmailHandler = (
             subject: body.subject,
             html: body.html,
             attachments_count: body.attachments?.length ?? 0,
+            from_name: fromName,
           }),
-        });
-      } catch (webhookError) {
-        console.error('Erro ao acionar webhook:', webhookError);
-      }
-
-      const response = await fetchImpl('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${resendApiKey}`,
-          'Content-Type': 'application/json',
         },
-        body: JSON.stringify(emailPayload),
-      });
+      );
 
-      const result = await parseResendResponse(response);
-
-      if (!response.ok) {
-        console.error('Erro da API Resend:', result);
+      if (!webhookResponse.ok) {
+        const result = await parseResendResponse(webhookResponse);
+        console.error('Erro ao acionar webhook:', result);
         throw new Error(extractErrorMessage(result));
-      }
-
-      const resendId =
-        typeof result === 'object' && result !== null && !Array.isArray(result)
-          ? (result as any).id
-          : undefined;
-      if (!resendId || typeof resendId !== 'string') {
-        throw new Error('Resposta inválida do serviço de email');
       }
 
       if (supabase) {
@@ -218,7 +174,7 @@ export const createSendEmailHandler = (
               html_body: body.html,
               attachments_count: body.attachments?.length ?? 0,
               status: 'sent',
-              resend_id: resendId,
+              resend_id: null,
               sent_by: userId,
             });
         } catch (error) {
@@ -228,7 +184,7 @@ export const createSendEmailHandler = (
 
       return {
         status: 200,
-        body: { success: true, id: resendId },
+        body: { success: true },
         headers: {
           'Content-Type': 'application/json',
           ...corsHeaders,
@@ -249,6 +205,7 @@ export const createSendEmailHandler = (
               attachments_count: body.attachments?.length ?? 0,
               status: 'failed',
               error_message: error?.message ?? 'Erro ao enviar email',
+              resend_id: null,
               sent_by: userId,
             });
         } catch (historyError) {
