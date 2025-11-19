@@ -104,6 +104,38 @@ export default function Agenda() {
     pageSize,
   ]);
 
+  const triggerWebhook = async (appointment: Appointment) => {
+    const payload = {
+      id: appointment.id,
+      client_id: appointment.client_id,
+      scheduled_at: appointment.scheduled_at,
+      type: appointment.type,
+      description: appointment.description,
+      status: appointment.status,
+      google_event_id: appointment.google_event_id,
+      client: appointment.clients,
+    };
+
+    try {
+      const response = await fetch(
+        "https://n8n.quantumtecnologia.com.br/webhook/agenda-crm",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        },
+      );
+
+      if (!response.ok) {
+        console.error("Erro ao acionar webhook da agenda");
+      }
+    } catch (webhookError) {
+      console.error(webhookError);
+    }
+  };
+
   useEffect(() => {
     fetchClients();
     fetchCalendarAppointments();
@@ -283,6 +315,13 @@ export default function Agenda() {
             .update({ google_event_id: googleEventId })
             .eq("id", data.id);
         }
+
+        const createdAppointment = {
+          ...data,
+          google_event_id: googleEventId,
+        } as Appointment;
+
+        triggerWebhook(createdAppointment);
 
         toast.success("Agendamento criado com sucesso!");
         fetchAppointments();
