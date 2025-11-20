@@ -64,6 +64,7 @@ interface Appointment {
   description: string;
   duration?: number | null;
   status: string;
+  link_meet?: string | null;
   google_event_id?: string | null;
   clients: {
     id: string;
@@ -655,6 +656,16 @@ export default function Agenda() {
                       minute: "2-digit",
                     })}
                   </div>
+                  {appointment.link_meet && (
+                    <a
+                      href={appointment.link_meet}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-primary hover:underline break-all"
+                    >
+                      Link do Meet
+                    </a>
+                  )}
                   <div className="text-sm line-clamp-2">{appointment.description}</div>
                 </div>
               ))}
