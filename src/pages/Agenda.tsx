@@ -267,7 +267,13 @@ export default function Agenda() {
             .eq("id", data.id);
         }
 
+        const updatedAppointment = {
+          ...(data as Appointment),
+          google_event_id: googleEventId,
+        };
+
         toast.success("Agendamento atualizado com sucesso!");
+        await triggerWebhook(updatedAppointment);
         fetchAppointments();
         fetchCalendarAppointments();
         handleClose();
@@ -321,7 +327,7 @@ export default function Agenda() {
           google_event_id: googleEventId,
         } as Appointment;
 
-        triggerWebhook(createdAppointment);
+        await triggerWebhook(createdAppointment);
 
         toast.success("Agendamento criado com sucesso!");
         fetchAppointments();
@@ -373,6 +379,8 @@ export default function Agenda() {
           toast.error("Erro ao sincronizar cancelamento no Google Calendar");
         }
       }
+      const updatedAppointment = { ...appointment, status };
+      await triggerWebhook(updatedAppointment);
       fetchAppointments();
       fetchCalendarAppointments();
     }
