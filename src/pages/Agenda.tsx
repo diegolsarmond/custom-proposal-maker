@@ -617,9 +617,12 @@ export default function Agenda() {
             }}
             className="w-full"
             styles={{
-              root: { width: "100%" },
-              months: { justifyContent: "center" },
-              day: { width: "3rem", height: "3rem" },
+              root: { width: "100%", display: "flex", justifyContent: "center" },
+              months: { width: "100%", justifyContent: "center" },
+              month: { width: "100%" },
+              caption_label: { fontSize: "1.1rem" },
+              head_cell: { fontSize: "1rem" },
+              day: { width: "3.75rem", height: "3.75rem", fontSize: "1rem" },
             }}
           />
         </div>
