@@ -62,6 +62,7 @@ interface Appointment {
   scheduled_at: string;
   type: string;
   description: string;
+  duration?: number | null;
   status: string;
   google_event_id?: string | null;
   clients: {
@@ -96,6 +97,7 @@ export default function Agenda() {
     scheduled_at: "",
     type: "",
     description: "",
+    duration: 60,
     status: "ativo",
   });
 
@@ -213,6 +215,13 @@ export default function Agenda() {
       return;
     }
 
+    const parsedDuration = formData.duration ? Number(formData.duration) : 60;
+
+    if (!Number.isFinite(parsedDuration) || parsedDuration <= 0) {
+      toast.error("Informe uma duração válida");
+      return;
+    }
+
     if (!user?.id) {
       toast.error("Usuário não autenticado");
       return;
@@ -226,6 +235,7 @@ export default function Agenda() {
           scheduled_at: formData.scheduled_at,
           type: formData.type,
           description: formData.description,
+          duration: parsedDuration,
           status: formData.status,
         })
         .eq("id", editingAppointment.id)
@@ -243,12 +253,14 @@ export default function Agenda() {
                 scheduled_at: data.scheduled_at,
                 type: data.type,
                 description: data.description,
+                duration: parsedDuration,
                 clients: data.clients,
               })
             : await createEvent({
                 scheduled_at: data.scheduled_at,
                 type: data.type,
                 description: data.description,
+                duration: parsedDuration,
                 clients: data.clients,
               });
 
@@ -287,6 +299,7 @@ export default function Agenda() {
             scheduled_at: formData.scheduled_at,
             type: formData.type,
             description: formData.description,
+            duration: parsedDuration,
             status: formData.status,
             created_by: user.id,
           },
@@ -304,6 +317,7 @@ export default function Agenda() {
             scheduled_at: data.scheduled_at,
             type: data.type,
             description: data.description,
+            duration: parsedDuration,
             clients: data.clients,
           });
 
@@ -344,6 +358,7 @@ export default function Agenda() {
       scheduled_at: new Date(appointment.scheduled_at).toISOString().slice(0, 16),
       type: appointment.type,
       description: appointment.description,
+      duration: appointment.duration ?? 60,
       status: appointment.status,
     });
     setOpen(true);
@@ -357,6 +372,7 @@ export default function Agenda() {
       scheduled_at: "",
       type: "",
       description: "",
+      duration: 60,
       status: "ativo",
     });
   };
@@ -487,6 +503,53 @@ export default function Agenda() {
                     onChange={(e) => setFormData({ ...formData, type: e.target.value })}
                     required
                   />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="duration">Duração</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Select
+                      value={String(Math.floor((formData.duration ?? 60) / 60))}
+                      onValueChange={(value) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          duration:
+                            Number(value) * 60 + ((prev.duration ?? 60) % 60),
+                        }))
+                      }
+                    >
+                      <SelectTrigger id="duration-hours">
+                        <SelectValue placeholder="Horas" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {[...Array(13)].map((_, index) => (
+                          <SelectItem key={index} value={String(index)}>
+                            {index}h
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Select
+                      value={String((formData.duration ?? 60) % 60)}
+                      onValueChange={(value) =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          duration:
+                            Math.floor((prev.duration ?? 60) / 60) * 60 + Number(value),
+                        }))
+                      }
+                    >
+                      <SelectTrigger id="duration-minutes">
+                        <SelectValue placeholder="Minutos" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {[0, 15, 30, 45].map((minute) => (
+                          <SelectItem key={minute} value={String(minute)}>
+                            {minute}m
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="status">Status</Label>

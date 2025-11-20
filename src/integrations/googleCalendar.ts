@@ -6,6 +6,7 @@ type CalendarEventInput = {
   scheduled_at: string;
   type: string;
   description: string;
+  duration?: number | null;
   clients: {
     name: string;
     company_name: string;
@@ -123,7 +124,8 @@ const initClient = async () => {
 
 const buildEventResource = (event: CalendarEventInput) => {
   const startDate = new Date(event.scheduled_at);
-  const endDate = new Date(startDate.getTime() + 60 * 60 * 1000);
+  const durationMinutes = event.duration && event.duration > 0 ? event.duration : 60;
+  const endDate = new Date(startDate.getTime() + durationMinutes * 60 * 1000);
 
   return {
     summary: event.type,
