@@ -616,6 +616,11 @@ export default function Agenda() {
               },
             }}
             className="w-full"
+            styles={{
+              root: { width: "100%" },
+              months: { justifyContent: "center" },
+              day: { width: "3rem", height: "3rem" },
+            }}
           />
         </div>
         <div className="border rounded-lg bg-card p-4 space-y-4">
