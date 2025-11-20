@@ -114,6 +114,7 @@ export default function Agenda() {
       scheduled_at: appointment.scheduled_at,
       type: appointment.type,
       description: appointment.description,
+      duration: appointment.duration,
       status: appointment.status,
       google_event_id: appointment.google_event_id,
       client: appointment.clients,
