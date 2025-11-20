@@ -121,9 +121,9 @@ export default function Agenda() {
       duration: appointment.duration,
       status: appointment.status,
       google_event_id: appointment.google_event_id,
-      client: appointment.clients,  
-      client: appointment.clients.email,
-      client: appointment.clients.phone,
+      client: appointment.clients,
+      client_email: clientEmail,
+      client_phone: clientPhone,
       event_type: eventType,
     };
 
