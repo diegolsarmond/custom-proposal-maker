@@ -121,9 +121,9 @@ export default function Agenda() {
       duration: appointment.duration,
       status: appointment.status,
       google_event_id: appointment.google_event_id,
-      client: appointment.clients,
-      client_email: clientEmail,
-      client_phone: clientPhone,
+      client: appointment.clients,  
+      client: appointment.clients.email,
+      client: appointment.clients.phone,
       event_type: eventType,
     };
 
@@ -300,6 +300,12 @@ export default function Agenda() {
         };
 
         toast.success("Agendamento atualizado com sucesso!");
+        const hasScheduleChange =
+          new Date(editingAppointment.scheduled_at).getTime() !==
+          new Date(data.scheduled_at).getTime();
+        const previousDuration = editingAppointment.duration ?? 60;
+        const hasDurationChange = previousDuration !== parsedDuration;
+
         if (hasScheduleChange || hasDurationChange) {
           await triggerWebhook(updatedAppointment, "updated");
         }
