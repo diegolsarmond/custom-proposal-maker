@@ -107,7 +107,7 @@ export default function Agenda() {
     pageSize,
   ]);
 
-  const triggerWebhook = async (appointment: Appointment) => {
+  const triggerWebhook = async (appointment: Appointment, eventType: string) => {
     const payload = {
       id: appointment.id,
       client_id: appointment.client_id,
@@ -117,6 +117,7 @@ export default function Agenda() {
       status: appointment.status,
       google_event_id: appointment.google_event_id,
       client: appointment.clients,
+      event_type: eventType,
     };
 
     try {
@@ -286,7 +287,7 @@ export default function Agenda() {
         };
 
         toast.success("Agendamento atualizado com sucesso!");
-        await triggerWebhook(updatedAppointment);
+        await triggerWebhook(updatedAppointment, "updated");
         fetchAppointments();
         fetchCalendarAppointments();
         handleClose();
@@ -342,7 +343,7 @@ export default function Agenda() {
           google_event_id: googleEventId,
         } as Appointment;
 
-        await triggerWebhook(createdAppointment);
+        await triggerWebhook(createdAppointment, "created");
 
         toast.success("Agendamento criado com sucesso!");
         fetchAppointments();
@@ -397,7 +398,7 @@ export default function Agenda() {
         }
       }
       const updatedAppointment = { ...appointment, status };
-      await triggerWebhook(updatedAppointment);
+      await triggerWebhook(updatedAppointment, "status_changed");
       fetchAppointments();
       fetchCalendarAppointments();
     }
