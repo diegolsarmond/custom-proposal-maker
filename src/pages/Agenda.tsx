@@ -70,6 +70,8 @@ interface Appointment {
     id: string;
     name: string;
     company_name: string;
+    email: string;
+    phone: string | null;
   };
 }
 
@@ -118,6 +120,8 @@ export default function Agenda() {
       status: appointment.status,
       google_event_id: appointment.google_event_id,
       client: appointment.clients,
+      client_email: appointment.clients.email,
+      client_phone: appointment.clients.phone,
       event_type: eventType,
     };
 
@@ -153,7 +157,7 @@ export default function Agenda() {
   const fetchCalendarAppointments = async () => {
     const { data, error } = await supabase
       .from("appointments")
-      .select(`*, clients (id, name, company_name)`)
+      .select(`*, clients (id, name, company_name, email, phone)`)
       .order("scheduled_at", { ascending: true });
 
     if (error) {
@@ -184,7 +188,7 @@ export default function Agenda() {
     let query = supabase
       .from("appointments")
       .select(
-        `*, clients (id, name, company_name)`,
+        `*, clients (id, name, company_name, email, phone)`,
         { count: "exact" },
       )
       .order("scheduled_at", { ascending: false })
@@ -242,7 +246,7 @@ export default function Agenda() {
           status: formData.status,
         })
         .eq("id", editingAppointment.id)
-        .select("*, clients (id, name, company_name)")
+        .select("*, clients (id, name, company_name, email, phone)")
         .single();
 
       if (error || !data) {
@@ -288,7 +292,15 @@ export default function Agenda() {
         };
 
         toast.success("Agendamento atualizado com sucesso!");
-        await triggerWebhook(updatedAppointment, "updated");
+        const hasScheduleChange =
+          new Date(editingAppointment.scheduled_at).getTime() !==
+          new Date(data.scheduled_at).getTime();
+        const previousDuration = editingAppointment.duration ?? 60;
+        const hasDurationChange = previousDuration !== parsedDuration;
+
+        if (hasScheduleChange || hasDurationChange) {
+          await triggerWebhook(updatedAppointment, "updated");
+        }
         fetchAppointments();
         fetchCalendarAppointments();
         handleClose();
@@ -307,7 +319,7 @@ export default function Agenda() {
             created_by: user.id,
           },
         ])
-        .select("*, clients (id, name, company_name)")
+        .select("*, clients (id, name, company_name, email, phone)")
         .single();
 
       if (error || !data) {
