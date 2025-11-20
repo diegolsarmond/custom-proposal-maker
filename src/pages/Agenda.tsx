@@ -110,6 +110,8 @@ export default function Agenda() {
   ]);
 
   const triggerWebhook = async (appointment: Appointment, eventType: string) => {
+    const clientEmail = appointment.clients?.email ?? "";
+    const clientPhone = appointment.clients?.phone ?? "";
     const payload = {
       id: appointment.id,
       client_id: appointment.client_id,
@@ -119,9 +121,9 @@ export default function Agenda() {
       duration: appointment.duration,
       status: appointment.status,
       google_event_id: appointment.google_event_id,
-      client: appointment.clients,
-      client_email: appointment.clients.email,
-      client_phone: appointment.clients.phone,
+      client: appointment.clients,  
+      client: appointment.clients.email,
+      client: appointment.clients.phone,
       event_type: eventType,
     };
 
@@ -235,6 +237,12 @@ export default function Agenda() {
     }
 
     if (editingAppointment) {
+      const hasScheduleChange =
+        new Date(editingAppointment.scheduled_at).getTime() !==
+        new Date(formData.scheduled_at).getTime();
+      const previousDuration = editingAppointment.duration ?? 60;
+      const hasDurationChange = previousDuration !== parsedDuration;
+
       const { data, error } = await supabase
         .from("appointments")
         .update({
