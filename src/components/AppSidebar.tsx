@@ -8,6 +8,7 @@ import {
   CalendarClock,
   FileSignature,
   Sparkles,
+  Bot,
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import {
@@ -52,6 +53,11 @@ const menuItems = [
     title: "Contratos",
     url: "/contracts",
     icon: FileSignature,
+  },
+  {
+    title: "Gestão de Prompts",
+    url: "/prompt-manager",
+    icon: Bot,
   },
   {
     title: "Produtos",
