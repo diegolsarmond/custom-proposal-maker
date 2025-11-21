@@ -7,6 +7,7 @@ import {
   Mail,
   CalendarClock,
   FileSignature,
+  Sparkles,
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import {
@@ -62,6 +63,14 @@ const menuItems = [
     url: "/send-email",
     icon: Mail,
   },
+];
+
+const adminMenuItems = [
+  {
+    title: "Gestão de Prompts",
+    url: "/prompt-management",
+    icon: Sparkles,
+  },
   {
     title: "Usuários",
     url: "/users",
@@ -71,7 +80,7 @@ const menuItems = [
 
 export function AppSidebar() {
   const { state } = useSidebar();
-  const { signOut } = useAuth();
+  const { signOut, role } = useAuth();
   const collapsed = state === "collapsed";
 
   return (
@@ -111,6 +120,32 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+        {role === "admin" && (
+          <SidebarGroup className="mt-4 border-t pt-4 bg-primary/5">
+            <SidebarGroupLabel className="text-primary">Painel Administrativo</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {adminMenuItems.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild className="data-[active=true]:bg-primary data-[active=true]:text-primary-foreground">
+                      <NavLink
+                        to={item.url}
+                        className={({ isActive }) =>
+                          isActive
+                            ? "bg-primary text-primary-foreground font-medium"
+                            : "hover:bg-primary/20 text-primary"
+                        }
+                      >
+                        <item.icon className="h-4 w-4" />
+                        {!collapsed && <span>{item.title}</span>}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
       </SidebarContent>
 
       <SidebarFooter className="border-t p-4">
