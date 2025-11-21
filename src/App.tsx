@@ -18,6 +18,7 @@ import SendEmail from "./pages/SendEmail";
 import Agenda from "./pages/Agenda";
 import NotFound from "./pages/NotFound";
 import Contracts from "./pages/Contracts";
+import PromptManager from "./pages/PromptManager";
 
 const queryClient = new QueryClient();
 
@@ -126,6 +127,16 @@ const App = () => (
                 <ProtectedRoute>
                   <Layout>
                     <SendEmail />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/prompt-manager"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <PromptManager />
                   </Layout>
                 </ProtectedRoute>
               }
